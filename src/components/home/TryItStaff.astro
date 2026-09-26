@@ -1,0 +1,197 @@
+---
+/**
+ * The "Try it" staff. The music moves, the playhead does not: five static
+ * full-bleed lines fading out toward both edges, a quiet band at the centre
+ * ("now"), and a tape (clef, barlines, notes) that src/scripts/try-it.ts
+ * glides left so the current note always sits in the band. Decorative
+ * (aria-hidden); the hero supplies the text equivalent. Drawn at desktop size
+ * (staff space 22), scaled by --k on phones.
+ */
+import { TREBLE_CLEF } from '../../data/clefPaths';
+import { beams, melody, staff } from '../../data/tryIt';
+
+const { width, height, space, top, head, stem, beam, ring, playhead } = staff;
+const bottom = top + 4 * space;
+const lines = Array.from({ length: 5 }, (_, i) => top + i * space);
+const yOf = (pos: number) => bottom - (pos * space) / 2;
+
+const notes = melody.map((n, i) => {
+  const y = yOf(n.pos);
+  const g = n.beam === undefined ? undefined : beams[n.beam];
+  // Beamed notes: stem down on the left of the head to the beam; others: stem up on the right.
+  const s = g
+    ? { x: n.x - stem.dx, y1: y, y2: g.bottom }
+    : { x: n.x + stem.dx, y1: y, y2: y - stem.upLength };
+  return { ...n, i, y, s };
+});
+
+/** Each group's beams are drawn with its last note, so they turn plum when the group is played. */
+const beamRects = (b: number) => {
+  const g = beams[b];
+  const xs = notes.filter((n) => n.beam === b).map((n) => n.s.x);
+  const x = Math.min(...xs) - stem.width / 2;
+  const w = Math.max(...xs) - Math.min(...xs) + stem.width;
+  return Array.from({ length: g.lines }, (_, k) => ({
+    x,
+    y: g.bottom - beam.height - k * (beam.height + beam.gap),
+    w,
+  }));
+};
+const lastOf = (n: (typeof notes)[number]) =>
+  n.beam !== undefined && !notes.some((m) => m.beam === n.beam && m.i > n.i);
+
+/** Sharp sign, relative to its note head (drawn at staff space 18, scaled). */
+const f = space / 18;
+const sharp = (x: number, y: number) =>
+  [
+    [-33, -15, -33, 15, 1.6],
+    [-27, -17, -27, 13, 1.6],
+    [-37, -2, -23, -6, 4],
+    [-37, 7, -23, 3, 4],
+  ].map(([x1, y1, x2, y2, w]) => ({ x1: x + x1 * f, y1: y + y1 * f, x2: x + x2 * f, y2: y + y2 * f, w: w * f }));
+
+const vars = [
+  `--h: ${height}`,
+  `--w: ${width}`,
+  `--x: ${melody[0].x}`,
+  `--ph-w: ${playhead.width}`,
+  `--ph-top: ${playhead.top}`,
+  `--ph-h: ${playhead.height}`,
+  `--ph-r: ${playhead.radius}`,
+].join('; ');
+---
+
+<div class="staff" style={vars} data-try-staff aria-hidden="true">
+  <svg class="lines" viewBox={`0 0 100 ${height}`} preserveAspectRatio="none" focusable="false">
+    {lines.map((y) => <line x1="0" y1={y} x2="100" y2={y} stroke-width={staff.lineWidth} vector-effect="non-scaling-stroke" />)}
+  </svg>
+
+  <div class="playhead" data-playhead></div>
+
+  <svg class="tape" viewBox={`0 0 ${width} ${height}`} focusable="false" data-tape>
+    <g class="ink">
+      {staff.barlines.map((x) => <line x1={x} y1={top} x2={x} y2={bottom} stroke-width={staff.barWidth} />)}
+      <path class="fill" d={TREBLE_CLEF} transform={`translate(${staff.clef.x} ${bottom - space}) scale(${space})`} />
+    </g>
+    {
+      notes.map((n) => (
+        <g class="note">
+          <line x1={n.s.x} y1={n.s.y1} x2={n.s.x} y2={n.s.y2} stroke-width={stem.width} />
+          {lastOf(n) && beamRects(n.beam!).map((r) => <rect x={r.x} y={r.y} width={r.w} height={beam.height} />)}
+          <circle class="ring" cx={n.x} cy={n.y} r={ring.r} stroke-width={ring.width} />
+          {n.accidental === 'sharp' &&
+            sharp(n.x, n.y).map((l) => <line x1={l.x1} y1={l.y1} x2={l.x2} y2={l.y2} stroke-width={l.w} />)}
+          <ellipse
+            class="head"
+            cx={n.x}
+            cy={n.y}
+            rx={head.rx}
+            ry={head.ry}
+            transform={`rotate(${head.angle} ${n.x} ${n.y})`}
+          />
+        </g>
+      ))
+    }
+  </svg>
+</div>
+
+<style>
+  .staff {
+    /* Scale of the drawing: 1 at staff space 22, smaller on phones. */
+    --k: 0.82;
+    position: relative;
+    width: 100%;
+    height: calc(var(--h) * var(--k) * 1px);
+    overflow: clip;
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 24%, #000 76%, transparent);
+    mask-image: linear-gradient(90deg, transparent, #000 24%, #000 76%, transparent);
+  }
+  @media (min-width: 768px) {
+    .staff {
+      --k: 1;
+    }
+  }
+
+  svg {
+    position: absolute;
+    top: 0;
+    max-width: none;
+    overflow: visible;
+  }
+
+  .lines {
+    left: 0;
+    width: 100%;
+    height: 100%;
+    stroke: var(--color-ink);
+    /* The lines recede a little so the notes lead. */
+    opacity: 0.55;
+  }
+
+  .playhead {
+    position: absolute;
+    left: 50%;
+    top: calc(var(--ph-top) * var(--k) * 1px);
+    width: calc(var(--ph-w) * var(--k) * 1px);
+    height: calc(var(--ph-h) * var(--k) * 1px);
+    margin-left: calc(var(--ph-w) * var(--k) * -0.5px);
+    border-radius: calc(var(--ph-r) * var(--k) * 1px);
+    background: var(--color-right-hand-band);
+    transition: opacity var(--duration-base) var(--ease-out);
+  }
+  :global(.try.is-done) .playhead {
+    opacity: 0;
+  }
+
+  /* The tape's origin sits at the centre; --x (the note in "now") is slid under it. */
+  .tape {
+    left: 50%;
+    width: calc(var(--w) * var(--k) * 1px);
+    height: 100%;
+    transform: translateX(calc(var(--x) * var(--k) * -1px));
+    transition: transform 600ms var(--ease-in-out-step) 180ms;
+    will-change: transform;
+  }
+
+  .ink {
+    stroke: var(--color-ink);
+  }
+  .fill {
+    stroke: none;
+    fill: var(--color-ink);
+  }
+
+  .note {
+    stroke: var(--color-ink);
+    fill: var(--color-ink);
+    transition:
+      fill 240ms var(--ease-out),
+      stroke 240ms var(--ease-out);
+  }
+  .note.is-played {
+    stroke: var(--color-accent);
+    fill: var(--color-accent);
+    transition-delay: 140ms;
+  }
+  .head,
+  .note rect {
+    stroke: none;
+  }
+  .ring {
+    fill: none;
+    stroke: var(--color-accent);
+    opacity: 0;
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .tape {
+      transition: none;
+    }
+    .note,
+    .note.is-played {
+      transition: none;
+    }
+  }
+</style>

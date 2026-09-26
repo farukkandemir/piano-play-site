@@ -1,0 +1,245 @@
+---
+/**
+ * The "Try it" keys: a short range drawn like a pencil sketch, centred under
+ * the playhead. Real <button>s, rendered disabled with the first note lit so
+ * the hero reads correctly without JS; src/scripts/try-it.ts enables them.
+ * Phones hide the keys above their range (keyboard.sm in src/data/tryIt.ts).
+ * The lit key breathes a soft plum glow and, with a mouse, shows its
+ * computer key.
+ */
+import { computerKeys, keyboard, melody, tryIt } from '../../data/tryIt';
+
+const LETTERS = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+const letterOf = Object.fromEntries(
+  Object.entries(computerKeys).map(([code, pitch]) => [pitch, code.replace('Key', '')]),
+);
+
+const { full, sm } = keyboard;
+const isBlack = (m: number) => LETTERS[m % 12].includes('#');
+/** Index of a white key counted from the lowest key. */
+const whiteIndex = (m: number) => {
+  let w = 0;
+  for (let k = full.low; k < m; k++) if (!isBlack(k)) w++;
+  return w;
+};
+const count = (r: { low: number; high: number }) => whiteIndex(r.high) - whiteIndex(r.low) + 1;
+
+const keys = [];
+for (let m = full.low; m <= full.high; m++) {
+  const name = LETTERS[m % 12];
+  const octave = Math.floor(m / 12) - 1;
+  const black = isBlack(m);
+  const pitch = `${name}${octave}`;
+  keys.push({
+    m,
+    pitch,
+    black,
+    label: black ? `${name[0]} sharp ${octave}` : pitch,
+    letter: letterOf[pitch],
+    // White: its slot. Black: the seam before the white key to its right.
+    w: whiteIndex(m),
+    inSm: m <= sm.high,
+  });
+}
+const first = melody[0].pitch;
+---
+
+<div
+  class="kb"
+  role="group"
+  aria-label={tryIt.keyboardLabel}
+  style={`--count: ${count(full)}; --count-sm: ${count(sm)}`}
+  data-try-keys
+>
+  {
+    keys.map((k) => (
+      <button
+        type="button"
+        class:list={['key', k.black ? 'key--black' : 'key--white', { 'out-sm': !k.inSm }]}
+        style={`--i: ${k.w}`}
+        data-note={k.pitch}
+        data-midi={k.m}
+        data-lit={k.pitch === first ? '' : undefined}
+        aria-label={k.label}
+        tabindex={k.pitch === first ? 0 : -1}
+        disabled
+      >
+        <span class="glow" aria-hidden="true" />
+        <span class="press" aria-hidden="true" />
+        {k.letter && (
+          <span class="cap" aria-hidden="true">
+            {k.letter}
+          </span>
+        )}
+      </button>
+    ))
+  }
+</div>
+
+<style>
+  .kb {
+    --gap: 4px;
+    --kw: min(48px, (100vw - 2 * var(--gutter) - (var(--count-sm) - 1) * var(--gap)) / var(--count-sm));
+    --kh: 184px;
+    --n: var(--count-sm);
+    --edge: color-mix(in srgb, var(--color-ink) 26%, transparent);
+    position: relative;
+    width: calc(var(--n) * (var(--kw) + var(--gap)) - var(--gap));
+    height: var(--kh);
+    margin-inline: auto;
+    flex-shrink: 0;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+  }
+  .key.out-sm {
+    display: none;
+  }
+  @media (min-width: 768px) {
+    .kb {
+      --kw: 64px;
+      --kh: clamp(140px, calc(100svh - 560px), 184px);
+      --n: var(--count);
+    }
+    .key.out-sm {
+      display: flex;
+    }
+  }
+
+  .key {
+    position: absolute;
+    top: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    font: inherit;
+    appearance: none;
+    -webkit-appearance: none;
+    cursor: pointer;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    transition: border-color var(--duration-fast) ease;
+  }
+  .key:disabled {
+    cursor: default;
+  }
+
+  .key--white {
+    left: calc(var(--i) * (var(--kw) + var(--gap)));
+    width: var(--kw);
+    height: 100%;
+    background: transparent;
+    border: 1px solid var(--edge);
+    border-radius: 3px 3px 12px 12px;
+  }
+  .key--black {
+    --bw: calc(var(--kw) * 0.5);
+    z-index: 1;
+    left: calc(var(--i) * (var(--kw) + var(--gap)) - var(--gap) / 2 - var(--bw) / 2);
+    width: var(--bw);
+    height: 58%;
+    background: var(--color-ink);
+    border: 0;
+    border-radius: 2px 2px 9px 9px;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .key--white:not(:disabled):hover {
+      border-color: color-mix(in srgb, var(--color-ink) 42%, transparent);
+    }
+  }
+
+  /* Lit: the note to play now. A plum glow breathes up from the base. */
+  .glow,
+  .press {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    opacity: 0;
+  }
+  .key--white .glow {
+    background: linear-gradient(
+      to top,
+      var(--color-accent-lifted),
+      var(--color-accent-tint) 42%,
+      transparent 85%
+    );
+  }
+  .key--black .glow {
+    background: linear-gradient(to top, var(--color-accent), color-mix(in srgb, var(--color-accent) 70%, var(--color-ink)));
+  }
+  .key--white[data-lit] {
+    border-color: color-mix(in srgb, var(--color-accent) 55%, transparent);
+  }
+  .key[data-lit] .glow {
+    opacity: 1;
+    animation: breathe 1.8s ease-in-out infinite alternate;
+  }
+  @keyframes breathe {
+    from {
+      opacity: 1;
+    }
+    to {
+      opacity: 0.45;
+    }
+  }
+  .key--black[data-lit] .glow {
+    animation-name: breathe-black;
+  }
+  @keyframes breathe-black {
+    from {
+      opacity: 1;
+    }
+    to {
+      opacity: 0.72;
+    }
+  }
+
+  /* Press response: a wash, colour set by the script (--press). */
+  .press {
+    background: var(--press, var(--color-accent));
+  }
+  /* Computer key on the lit key: desktop with a mouse, once the script runs. */
+  .cap {
+    position: relative;
+    display: none;
+    min-width: 24px;
+    height: 24px;
+    margin-bottom: 14px;
+    padding-inline: 6px;
+    border: 1px solid color-mix(in srgb, var(--color-accent) 35%, transparent);
+    border-radius: 7px;
+    background: var(--color-surface);
+    color: var(--color-accent);
+    font-size: 12px;
+    line-height: 22px;
+    font-weight: var(--weight-semibold);
+    text-align: center;
+  }
+  .key--black .cap {
+    margin-bottom: 10px;
+    border-color: transparent;
+  }
+  @media (min-width: 768px) and (pointer: fine) {
+    :global(.try.is-live) .key[data-lit] .cap {
+      display: block;
+    }
+  }
+
+  .key:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 3px;
+    box-shadow: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .key[data-lit] .glow {
+      animation: none;
+    }
+  }
+</style>

@@ -19,6 +19,9 @@ const path = Astro.url.pathname.replace(/\.html$/, '').replace(/\/$/, '') || '/'
       }
     </ul>
   </nav>
+  <p class="credits">
+    <a href={site.credits.href} rel="license noopener" target="_blank">{site.credits.text}</a>
+  </p>
 </footer>
 
 <style>
@@ -40,6 +43,15 @@ const path = Astro.url.pathname.replace(/\.html$/, '').replace(/\/$/, '') || '/'
       /* Paper insets the footer 16px from the content edge. */
       padding-inline: calc(var(--gutter) + 16px);
     }
+  }
+  .credits {
+    flex-basis: 100%;
+  }
+  .credits a {
+    /* Long line: let it wrap on phones. */
+    display: inline;
+    padding-block: 0;
+    margin-block: 0;
   }
   .links {
     display: flex;

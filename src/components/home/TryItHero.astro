@@ -1,0 +1,299 @@
+---
+/**
+ * Landing page hero "Try it: Für Elise". One calm, centred piece: words, a
+ * staff whose music flows toward a fixed playhead, and a small drawn keyboard
+ * beneath it. Wait Mode: the glowing key must be pressed; a thread of light
+ * rises to the note, the note blooms plum and the music glides on
+ * (src/scripts/try-it.ts). Replaces Hero.astro, which is kept for a swap back.
+ */
+import TryItStaff from './TryItStaff.astro';
+import TryItKeys from './TryItKeys.astro';
+import AppStoreButton from '../shared/AppStoreButton.astro';
+import { tryIt } from '../../data/tryIt';
+---
+
+<section
+  class="try"
+  aria-labelledby="try-title"
+  data-try-it
+  data-done-headline={tryIt.doneHeadline}
+  data-done-sub={tryIt.doneSub}
+>
+  <div class="words container">
+    <div class="label-row">
+      <p class="label">{tryIt.label}</p>
+      <button class="sound" type="button" aria-pressed="true" aria-label={tryIt.sound.on} data-sound hidden>
+        <svg class="icon" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path d="M11 5 6 9H2v6h4l5 4V5z" />
+          <path class="waves" d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14" />
+          <path class="mute" d="m22 9-6 6M16 9l6 6" />
+        </svg>
+      </button>
+    </div>
+    <h1 id="try-title" class="headline swap">
+      <span data-start>{tryIt.headline}</span>
+      <span data-done aria-hidden="true"></span>
+    </h1>
+    <p class="sub swap">
+      <span data-start>{tryIt.sub}</span>
+      <span data-done aria-hidden="true"></span>
+    </p>
+  </div>
+
+  <div class="music">
+    <p class="visually-hidden">{tryIt.staffDescription}</p>
+    <TryItStaff />
+    <TryItKeys />
+  </div>
+
+  <div class="after" data-after inert>
+    <button class="again" type="button" data-again>
+      <svg class="icon" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5" />
+      </svg>
+      {tryIt.playAgain}
+    </button>
+    <span class="dot" aria-hidden="true"></span>
+    <AppStoreButton variant="text" />
+  </div>
+
+  <svg class="threads" aria-hidden="true" focusable="false" data-threads>
+    <defs>
+      <linearGradient id="try-thread" gradientUnits="userSpaceOnUse" x1="0" x2="0" y1="0" y2="0" data-grad>
+        <stop offset="0" stop-color="var(--color-accent)" stop-opacity="0" />
+        <stop offset="1" stop-color="var(--color-accent)" />
+      </linearGradient>
+    </defs>
+  </svg>
+
+  <p class="visually-hidden" role="status" aria-live="polite" data-status></p>
+</section>
+
+<script>
+  import { startTryIt } from '../../scripts/try-it';
+  startTryIt();
+</script>
+
+<style>
+  .try {
+    /* Local: height of the nav above (Nav.astro: 28 + 22 + 28). */
+    --nav-h: 78px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(20px, 3.2svh, 36px);
+    min-height: calc(min(100svh, 940px) - var(--nav-h));
+    padding-block: clamp(4px, 1svh, 16px) clamp(16px, 3svh, 40px);
+    overflow-x: clip;
+  }
+
+  .words {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    text-align: center;
+  }
+
+  .label {
+    line-height: 18px;
+  }
+
+  .headline {
+    max-width: 900px;
+    font-size: clamp(2.5rem, 1.6rem + 2.6vw, 3.75rem); /* 40 → 60 */
+    line-height: 1.02;
+    letter-spacing: var(--tracking-display);
+    font-weight: var(--weight-semibold);
+    color: var(--color-ink);
+    text-wrap: balance;
+  }
+
+  /* The sound toggle sits beside the label, taking no height of its own. */
+  .label-row {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    height: 18px;
+  }
+
+  .sub {
+    max-width: 560px;
+    font-size: clamp(1.0625rem, 1rem + 0.2vw, 1.1875rem); /* 17 → 19 */
+    line-height: 1.526; /* 29 / 19 */
+    color: var(--color-ink-muted);
+    text-wrap: pretty;
+  }
+
+  /* Start and done copy share one grid cell and crossfade. */
+  .swap {
+    display: grid;
+  }
+  .swap > span {
+    grid-area: 1 / 1;
+    transition: opacity var(--duration-base) var(--ease-out);
+  }
+  .swap > [data-done] {
+    opacity: 0;
+  }
+  .try.is-done .swap > [data-start] {
+    opacity: 0;
+  }
+  .try.is-done .swap > [data-done] {
+    opacity: 1;
+    transition-delay: 700ms;
+  }
+  .try.is-done .swap > [data-start] {
+    transition-delay: 550ms;
+  }
+
+  .music {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: clamp(12px, 3svh, 32px);
+    width: 100%;
+  }
+
+  .icon {
+    flex-shrink: 0;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .sound,
+  .again {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin: 0;
+    border: 0;
+    background: transparent;
+    font: inherit;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition:
+      color var(--duration-fast) ease,
+      transform var(--duration-fast) var(--ease-out);
+  }
+  .sound:active,
+  .again:active {
+    transform: scale(0.96);
+  }
+
+  .sound {
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    margin-right: -36px; /* keep the label optically centred */
+    padding: 0;
+    border-radius: var(--radius-pill);
+    color: var(--color-ink-faint);
+  }
+  .sound:focus-visible {
+    border-radius: var(--radius-pill);
+  }
+  .sound[hidden] {
+    display: none;
+  }
+  .sound .mute,
+  .sound[aria-pressed='false'] .waves {
+    display: none;
+  }
+  .sound[aria-pressed='false'] .mute {
+    display: inline;
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .sound:hover,
+    .again:hover {
+      color: var(--color-ink);
+    }
+  }
+
+  .after {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    min-height: 36px;
+    padding-inline: var(--gutter);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(6px);
+    transition:
+      opacity var(--duration-base) var(--ease-out),
+      transform var(--duration-base) var(--ease-out),
+      visibility 0s linear var(--duration-base);
+  }
+  .try.is-done .after {
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+    transition-delay: 900ms, 900ms, 0s;
+  }
+  .again {
+    padding: 8px 4px;
+    color: var(--color-accent);
+    font-size: var(--text-label);
+    font-weight: var(--weight-medium);
+    line-height: 18px;
+  }
+  .again:focus-visible {
+    border-radius: 8px;
+  }
+  .dot {
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: var(--color-ink-faint);
+  }
+
+  .threads {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    overflow: visible;
+    pointer-events: none;
+    z-index: 2;
+  }
+  .threads :global(path) {
+    fill: none;
+    stroke: url(#try-thread);
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-dasharray: 1 1;
+  }
+  .threads :global(path.is-miss) {
+    stroke: var(--color-ink-faint);
+  }
+
+  @media (max-width: 767px) {
+    .after {
+      flex-direction: column;
+      gap: 4px;
+    }
+    .dot {
+      display: none;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .after,
+    .try.is-done .after {
+      transform: none;
+    }
+    .try.is-done .swap > [data-start],
+    .try.is-done .swap > [data-done],
+    .try.is-done .after {
+      transition-delay: 0s;
+    }
+  }
+</style>

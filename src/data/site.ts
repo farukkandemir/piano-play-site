@@ -15,6 +15,10 @@ export const site = {
   appStoreId: '',
   comingSoon: 'Coming soon to the App Store',
   footerLine: 'piano.play · made for iPhone',
+  credits: {
+    text: 'Piano sound: Salamander Grand Piano by Alexander Holm, CC BY 3.0',
+    href: 'https://creativecommons.org/licenses/by/3.0/',
+  },
   footerLinks: [
     { label: 'Privacy', href: '/privacy' },
     { label: 'Support', href: '/support' },
