@@ -1,0 +1,188 @@
+---
+/**
+ * The hero's grand staff: treble and bass, three bars of chords, a cursor band
+ * on the current chord. Decorative (aria-hidden); the caller supplies the text
+ * equivalent. Motion lives in src/scripts/hero-staff.ts.
+ *
+ * The drawing is a fixed 1440 × 384 frame (Paper) whose staff lines run far
+ * past both sides, so it never shrinks: wide screens centre it, narrower ones
+ * pan it to keep the cursor in view.
+ */
+import { TREBLE_CLEF, BASS_CLEF } from '../../data/clefPaths';
+import { staff, chords, type Chord } from '../../data/hero';
+
+const { width, height, space, head, stem, cursor } = staff;
+const lineY = (top: number) => Array.from({ length: 5 }, (_, i) => top + i * space);
+const lines = [...lineY(staff.trebleTop), ...lineY(staff.bassTop)];
+const staffBottom = staff.bassTop + 4 * space;
+
+/** Stem as [x, y1, y2] from the note head nearest the stem's end (as in Paper). */
+function stemLine(x: number, ys: number[], dir: Chord['trebleStem']) {
+  if (dir === 'up' && ys.length) {
+    const y = Math.min(...ys) - stem.gap;
+    return { x: x + stem.dx, y1: y, y2: +(y - stem.length).toFixed(2) };
+  }
+  if (dir === 'down' && ys.length) {
+    const y = Math.max(...ys) + stem.gap;
+    return { x: x - stem.dx, y1: y, y2: +(y + stem.length).toFixed(2) };
+  }
+  return null;
+}
+
+const drawn = chords.map((c, i) => ({
+  ...c,
+  i,
+  hollow: c.trebleStem === 'none' && c.bassStem === 'none',
+  heads: [...c.treble, ...c.bass],
+  stems: [stemLine(c.x, c.treble, c.trebleStem), stemLine(c.x, c.bass, c.bassStem)].filter(
+    (s): s is NonNullable<typeof s> => s !== null,
+  ),
+}));
+const still = chords[staff.still];
+---
+
+<div class="staff" data-hero-staff>
+  <div class="stage" style={`--cx: ${still.x}px`}>
+    <svg
+      class="score"
+      width={width}
+      height={height}
+      viewBox={`0 0 ${width} ${height}`}
+      aria-hidden="true"
+      focusable="false"
+    >
+      <rect
+        class="cursor"
+        x={-cursor.width / 2}
+        y={cursor.top}
+        width={cursor.width}
+        height={cursor.height}
+        rx={cursor.radius}
+      />
+      <g class="lines" stroke-width={staff.lineWidth}>
+        {lines.map((y) => <line x1={-4000} y1={y} x2={width + 4000} y2={y} />)}
+        {staff.barlines.map((x) => <line x1={x} y1={staff.trebleTop} x2={x} y2={staffBottom} />)}
+        <path d={TREBLE_CLEF} transform={`translate(${staff.trebleClef.x} ${staff.trebleClef.y}) scale(${space})`} />
+        <path d={BASS_CLEF} transform={`translate(${staff.bassClef.x} ${staff.bassClef.y}) scale(${space})`} />
+      </g>
+      {
+        drawn.map((c) => (
+          <g
+            class:list={['chord', { 'is-played': c.i <= staff.still, 'is-current': c.i === staff.still }]}
+            data-x={c.x}
+          >
+            {c.heads.map((y) => (
+              <ellipse
+                class:list={['head', { hollow: c.hollow }]}
+                cx={c.x}
+                cy={y}
+                rx={head.rx}
+                ry={head.ry}
+                transform={`rotate(${head.angle} ${c.x} ${y})`}
+                stroke-width={c.hollow ? head.hollowStroke : undefined}
+              />
+            ))}
+            {c.stems.map((s) => (
+              <line class="stem" x1={s.x} y1={s.y1} x2={s.x} y2={s.y2} stroke-width={stem.width} />
+            ))}
+          </g>
+        ))
+      }
+    </svg>
+  </div>
+</div>
+
+<style>
+  .staff {
+    container-type: inline-size;
+    overflow: clip;
+    width: 100%;
+    height: 384px;
+  }
+
+  .stage {
+    width: 1440px;
+    height: 100%;
+    /* Below 1440 the frame pans to keep the cursor centred, never past its ends. */
+    transform: translateX(clamp(calc(100cqw - 1440px), calc(50cqw - var(--cx)), 0px));
+    transition: transform 900ms var(--ease-in-out-step);
+  }
+
+  @container (min-width: 1440px) {
+    .stage {
+      transform: translateX(calc(50cqw - 720px));
+    }
+  }
+
+  .score {
+    overflow: visible;
+    max-width: none;
+  }
+
+  .lines {
+    stroke: var(--color-ink);
+    fill: var(--color-ink);
+  }
+
+  .lines path {
+    stroke: none;
+  }
+
+  .cursor {
+    fill: var(--color-right-hand-band);
+    transform: translateX(var(--cx));
+    transition:
+      transform 600ms var(--ease-in-out-step),
+      opacity 400ms var(--ease-out);
+  }
+
+  .chord {
+    color: var(--color-ink);
+    transition: color 600ms var(--ease-out);
+  }
+
+  .chord.is-played {
+    color: var(--color-accent);
+    /* Turn plum as the cursor arrives, not as it leaves. */
+    transition: color 240ms var(--ease-out) 420ms;
+  }
+
+  .head {
+    fill: currentColor;
+  }
+
+  .head.hollow {
+    fill: none;
+    stroke: currentColor;
+  }
+
+  .stem {
+    stroke: currentColor;
+  }
+
+  .staff.is-resetting .cursor {
+    opacity: 0;
+  }
+
+  .staff.is-resetting .stage {
+    transition-duration: 1600ms;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .stage,
+    .cursor,
+    .chord {
+      transition: none;
+    }
+
+    /* Still frame: only the chord under the cursor is plum. */
+    .chord.is-played:not(.is-current) {
+      color: var(--color-ink);
+    }
+  }
+</style>
+
+<script>
+  import { startHeroStaff } from '../../scripts/hero-staff';
+  startHeroStaff();
+</script>

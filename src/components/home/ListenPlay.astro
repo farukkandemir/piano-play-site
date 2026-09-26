@@ -1,0 +1,142 @@
+---
+/**
+ * 02 · Listen and 03 · Play (docs/spec.md §5 item 4): one phone, pinned while
+ * the reader scrolls through two chapters. The header crossfades with the
+ * chapter; only the screen content moves. Chapter anchors #listen and #play
+ * are markers spanning each half of the scroll length.
+ */
+import { a11y, chapters } from '../../data/listenPlay';
+import PhoneFrame from './PhoneFrame.astro';
+import PracticeScreen from './PracticeScreen.astro';
+import ChapterBar from './ChapterBar.astro';
+
+const heads = [chapters.listen, chapters.play];
+---
+
+<section class="lp" aria-labelledby="lp-title-listen" data-listen-play data-chapter="listen">
+  <span id="listen" class="mark mark--listen" data-chapter-mark="listen"></span>
+  <span id="play" class="mark mark--play" data-chapter-mark="play"></span>
+
+  <div class="pin">
+    <div class="container inner">
+      <div class="heads">
+        {
+          heads.map((c) => (
+            <div class="head" data-head={c.id}>
+              <p class="label">{c.label}</p>
+              <h2 class="title" id={`lp-title-${c.id}`}>{c.title}</h2>
+              <p class="body line">{c.line}</p>
+            </div>
+          ))
+        }
+      </div>
+
+      <div class="device">
+        <p class="visually-hidden">{a11y.screenDescription}</p>
+        <p class="visually-hidden">{a11y.playHint}</p>
+        <PhoneFrame>
+          <PracticeScreen />
+        </PhoneFrame>
+        <p class="visually-hidden" role="status" aria-live="polite" data-status></p>
+      </div>
+    </div>
+  </div>
+
+  <ChapterBar />
+</section>
+
+<script>
+  import { startListenPlay } from '../../scripts/listen-play';
+  startListenPlay();
+</script>
+
+<style>
+  .lp {
+    /* Local: scroll length of the pinned stretch, and the height kept free around the phone. */
+    --lp-length: 280svh;
+    --lp-reserve: 360px;
+    position: relative;
+    height: var(--lp-length);
+  }
+  .mark {
+    position: absolute;
+    left: 0;
+    width: 1px;
+    height: 50%;
+    pointer-events: none;
+  }
+  .mark--listen {
+    top: 0;
+  }
+  .mark--play {
+    top: 50%;
+  }
+
+  .pin {
+    position: sticky;
+    top: 0;
+    height: 100svh;
+    display: flex;
+    align-items: center;
+  }
+  .inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 32px;
+    /* Room for the chapter bar below (50 px bar + 20 px offset + air). */
+    padding-block: 24px 96px;
+  }
+
+  .heads {
+    display: grid;
+    width: 100%;
+  }
+  .head {
+    grid-area: 1 / 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
+    text-align: center;
+    transition:
+      opacity var(--duration-base) var(--ease-out),
+      transform var(--duration-base) var(--ease-out);
+  }
+  .label {
+    line-height: 18px;
+  }
+  .line {
+    max-width: 640px;
+    font-size: var(--text-body-sm);
+    line-height: 29px;
+  }
+  .lp[data-chapter='listen'] .head[data-head='play'],
+  .lp[data-chapter='play'] .head[data-head='listen'] {
+    opacity: 0;
+    transform: translateY(12px);
+    pointer-events: none;
+  }
+
+  .device {
+    width: min(100%, 964px, max(320px, calc((100svh - var(--lp-reserve)) * 964 / 462)));
+  }
+
+  @media (min-width: 768px) {
+    .inner {
+      gap: 56px;
+    }
+  }
+  @media (max-width: 767px) {
+    .line {
+      font-size: var(--text-body);
+      line-height: var(--leading-body);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .lp[data-chapter='listen'] .head[data-head='play'],
+    .lp[data-chapter='play'] .head[data-head='listen'] {
+      transform: none;
+    }
+  }
+</style>

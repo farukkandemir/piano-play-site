@@ -1,0 +1,96 @@
+---
+/**
+ * Chapter bar (Paper ADL-0): pinned to the bottom of the viewport from when
+ * #choose enters until the Listen/Play section leaves. The current chapter is
+ * filled ink. Shown, hidden and kept current by src/scripts/listen-play.ts.
+ */
+import { chapterBar } from '../../data/listenPlay';
+---
+
+<nav class="chapter-bar" aria-label={chapterBar.ariaLabel} data-chapter-bar hidden>
+  <ul>
+    {
+      chapterBar.items.map((item, i) => (
+        <li>
+          <a href={item.href} data-chapter-link={item.id} aria-current={i === 0 ? 'true' : undefined}>
+            {item.label}
+          </a>
+        </li>
+      ))
+    }
+  </ul>
+</nav>
+
+<style>
+  .chapter-bar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    margin-inline: auto;
+    bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+    z-index: 20;
+    width: max-content;
+    max-width: calc(100vw - 2 * var(--gutter));
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-pill);
+    box-shadow: 0 10px 30px -12px color-mix(in srgb, var(--color-ink) 25%, transparent);
+    padding: 5px;
+    opacity: 0;
+    transform: translateY(12px);
+    visibility: hidden;
+    transition:
+      opacity var(--duration-base) var(--ease-out),
+      transform var(--duration-base) var(--ease-out),
+      visibility 0s linear var(--duration-base);
+  }
+  .chapter-bar[hidden] {
+    display: none;
+  }
+  .chapter-bar.is-shown {
+    opacity: 1;
+    transform: none;
+    visibility: visible;
+    transition:
+      opacity var(--duration-base) var(--ease-out),
+      transform var(--duration-base) var(--ease-out),
+      visibility 0s;
+  }
+  ul {
+    display: flex;
+    gap: 4px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  a {
+    display: block;
+    padding: 10px 20px;
+    border-radius: var(--radius-pill);
+    font-size: var(--text-label);
+    line-height: 18px;
+    font-weight: var(--weight-medium);
+    color: var(--color-ink-muted);
+    text-decoration: none;
+    transition:
+      background-color var(--duration-fast) ease,
+      color var(--duration-fast) ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+  a:hover {
+    color: var(--color-ink);
+  }
+  a[aria-current] {
+    background: var(--color-ink);
+    color: var(--color-surface);
+  }
+  a:focus-visible {
+    border-radius: var(--radius-pill);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .chapter-bar {
+      transform: none;
+    }
+  }
+</style>

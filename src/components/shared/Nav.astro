@@ -1,0 +1,38 @@
+---
+import AppStoreButton from './AppStoreButton.astro';
+import { site } from '../../data/site';
+
+const isHome = ['/', '/index', '/index.html'].includes(Astro.url.pathname);
+---
+
+<header class="nav">
+  <a class="wordmark" href="/" aria-current={isHome ? 'page' : undefined}>{site.name}</a>
+  <AppStoreButton variant="text" />
+</header>
+
+<style>
+  .nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 28px var(--gutter);
+    max-width: calc(var(--content-max) + 2 * var(--gutter));
+    margin-inline: auto;
+  }
+  .wordmark {
+    font-size: 18px;
+    line-height: 22px;
+    font-weight: var(--weight-semibold);
+    letter-spacing: -0.01em;
+    color: var(--color-ink);
+    text-decoration: none;
+    transition: opacity var(--duration-fast) ease;
+  }
+  .wordmark:hover {
+    opacity: 0.7;
+  }
+  .wordmark:active {
+    opacity: 0.55;
+  }
+</style>

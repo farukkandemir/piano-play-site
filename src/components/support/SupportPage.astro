@@ -1,0 +1,59 @@
+---
+import ContactCard from './ContactCard.astro';
+import FaqGroup from './FaqGroup.astro';
+import { support } from '../../data/support';
+
+const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+---
+
+<article class="page">
+  <header class="head">
+    <h1 class="h1">{support.title}</h1>
+    <p class="intro">{support.intro}</p>
+  </header>
+
+  <ContactCard />
+
+  <div class="groups">
+    {support.groups.map((g) => <FaqGroup id={`faq-${slug(g.title)}`} title={g.title} items={g.items} />)}
+  </div>
+</article>
+
+<style>
+  .page {
+    width: 100%;
+    max-width: calc(var(--reading-max) + 2 * var(--gutter));
+    margin-inline: auto;
+    padding: 0 var(--gutter) 120px;
+  }
+  .head {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    padding: clamp(48px, 20px + 7vw, 96px) 0 48px;
+  }
+  .h1 {
+    font-size: clamp(3rem, 2.2rem + 3.2vw, 4.5rem); /* 48 → 72 */
+    line-height: 1;
+    letter-spacing: var(--tracking-title);
+    font-weight: var(--weight-semibold);
+  }
+  .intro {
+    font-size: var(--text-body-sm);
+    line-height: 29px;
+    color: var(--color-ink-muted);
+    text-wrap: pretty;
+  }
+  .groups {
+    display: flex;
+    flex-direction: column;
+    gap: 56px;
+    padding-top: 80px;
+  }
+  @media (max-width: 767px) {
+    .groups {
+      padding-top: 64px;
+      gap: 48px;
+    }
+  }
+</style>

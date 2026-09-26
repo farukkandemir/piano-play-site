@@ -1,0 +1,108 @@
+---
+/**
+ * The launch switch lives here and only here (site.launched in src/data/site.ts).
+ *
+ * launched = false  → quiet "Coming soon to the App Store" (text, or a light non-link pill).
+ * launched = true   → Apple's official "Download on the App Store" badge linking to site.appStoreUrl.
+ *
+ * BADGE: Apple's badge artwork is licensed; the owner downloads it from
+ * https://developer.apple.com/app-store/marketing/guidelines/ (black, US English)
+ * and saves it as src/assets/images/app-store-badge.svg. Do not redraw or recolour it.
+ * Until that file exists, a plain text link stands in so the build never breaks.
+ */
+import { site } from '../../data/site';
+
+interface Props {
+  variant?: 'text' | 'button-light';
+}
+const { variant = 'text' } = Astro.props;
+
+const badges = import.meta.glob<{ src: string; width: number; height: number }>(
+  '/src/assets/images/app-store-badge.svg',
+  { eager: true, import: 'default' },
+);
+const badge = Object.values(badges)[0];
+const launched = site.launched && site.appStoreUrl !== '';
+---
+
+{
+  launched ? (
+    <a class:list={['store-link', `store-link--${variant}`]} href={site.appStoreUrl}>
+      {badge ? (
+        <img
+          src={badge.src}
+          width={badge.width}
+          height={badge.height}
+          alt="Download on the App Store"
+          class="badge"
+        />
+      ) : (
+        <span class="fallback">Download on the App Store</span>
+      )}
+    </a>
+  ) : variant === 'button-light' ? (
+    <p class="soon soon--button">{site.comingSoon}</p>
+  ) : (
+    <p class="soon soon--text">{site.comingSoon}</p>
+  )
+}
+
+<style>
+  .soon {
+    font-weight: var(--weight-medium);
+  }
+  .soon--text {
+    font-size: var(--text-label);
+    line-height: 18px;
+    color: var(--color-ink-muted);
+  }
+  .soon--button {
+    --store-light: var(--color-on-ink);
+    align-self: start;
+    display: inline-flex;
+    padding: 15px 24px;
+    border-radius: 14px;
+    background: var(--store-light);
+    color: var(--color-ink);
+    font-size: var(--text-small);
+    line-height: 18px;
+  }
+
+  .store-link {
+    display: inline-flex;
+    align-self: start;
+    border-radius: 9px;
+    text-decoration: none;
+    transition:
+      opacity var(--duration-fast) ease,
+      transform var(--duration-fast) var(--ease-out);
+  }
+  .store-link:hover {
+    opacity: 0.85;
+  }
+  .store-link:active {
+    transform: scale(0.97);
+  }
+  .store-link--text .badge {
+    height: 40px;
+    width: auto;
+  }
+  .store-link--button-light .badge {
+    height: 48px;
+    width: auto;
+  }
+  .fallback {
+    font-size: var(--text-small);
+    font-weight: var(--weight-medium);
+    line-height: 18px;
+  }
+  .store-link--text .fallback {
+    color: var(--color-ink);
+  }
+  .store-link--button-light .fallback {
+    padding: 15px 24px;
+    border-radius: 14px;
+    background: var(--color-on-ink);
+    color: var(--color-ink);
+  }
+</style>

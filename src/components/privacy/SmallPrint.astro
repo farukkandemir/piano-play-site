@@ -1,0 +1,71 @@
+---
+import { privacy } from '../../data/privacy';
+const { smallPrint } = privacy;
+---
+
+<section class="small-print" aria-labelledby="small-print-title">
+  <h2 id="small-print-title" class="visually-hidden">{smallPrint.title}</h2>
+  {
+    smallPrint.items.map((item) => (
+      <div class="item">
+        <h3>{item.title}</h3>
+        <p>
+          {item.text}
+          {'email' in item && (
+            <>
+              {' '}
+              <a href={`mailto:${item.email}`}>{item.email}</a>
+            </>
+          )}
+        </p>
+      </div>
+    ))
+  }
+</section>
+
+<style>
+  .small-print {
+    display: grid;
+    gap: 28px;
+    padding-top: 32px;
+    border-top: 1px solid var(--color-border);
+    font-size: var(--text-small);
+  }
+  @media (min-width: 768px) {
+    .small-print {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 32px;
+    }
+  }
+  .item {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  h3 {
+    font-size: inherit;
+    line-height: 18px;
+    font-weight: var(--weight-semibold);
+    color: var(--color-ink);
+  }
+  p {
+    line-height: 23px;
+    color: var(--color-ink-muted);
+    text-wrap: pretty;
+  }
+  a {
+    color: var(--color-ink-muted);
+    text-decoration-line: underline;
+    text-decoration-color: var(--color-border);
+    text-decoration-thickness: 1px;
+    text-underline-offset: 3px;
+    overflow-wrap: anywhere;
+    transition:
+      color var(--duration-fast) ease,
+      text-decoration-color var(--duration-fast) ease;
+  }
+  a:hover {
+    color: var(--color-ink);
+    text-decoration-color: currentColor;
+  }
+</style>

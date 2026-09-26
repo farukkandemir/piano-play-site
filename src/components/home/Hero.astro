@@ -1,0 +1,54 @@
+---
+/**
+ * Landing page hero (Paper "D · The music room", hero frame): headline, sub,
+ * and the full-width grand staff. The staff is its own component so the hero
+ * picture can be swapped later.
+ */
+import GrandStaff from './GrandStaff.astro';
+import { hero } from '../../data/hero';
+---
+
+<section class="hero" aria-labelledby="hero-title">
+  <div class="text container">
+    <h1 id="hero-title" class="headline">{hero.headline}</h1>
+    <p class="sub">{hero.sub}</p>
+  </div>
+  <p class="visually-hidden">{hero.staffDescription}</p>
+  <GrandStaff />
+</section>
+
+<style>
+  .hero {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(40px, 2rem + 3vw, 72px);
+    padding-top: clamp(40px, 2rem + 3vw, 72px);
+    overflow-x: clip;
+  }
+
+  .text {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 22px;
+    text-align: center;
+  }
+
+  .headline {
+    max-width: 1000px;
+    font-size: var(--text-display);
+    line-height: var(--leading-display);
+    letter-spacing: var(--tracking-display);
+    font-weight: var(--weight-semibold);
+    color: var(--color-ink);
+    text-wrap: balance;
+  }
+
+  .sub {
+    max-width: 640px;
+    font-size: var(--text-body);
+    line-height: var(--leading-body);
+    color: var(--color-ink-muted);
+    text-wrap: pretty;
+  }
+</style>

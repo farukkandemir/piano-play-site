@@ -1,0 +1,417 @@
+---
+/**
+ * The app's practice screen (Paper "Practice V1 · default", 932×430), rebuilt in
+ * HTML/SVG so it can move. It is drawn once at its design size and scaled as a
+ * whole to the phone's screen, so it looks the same on every width.
+ *
+ * Title bar and staff are decorative (aria-hidden). The keyboard is real
+ * <button>s; it stays inert until the Play chapter (src/scripts/listen-play.ts).
+ */
+import { TREBLE_CLEF, BASS_CLEF } from '../../data/clefPaths';
+import { a11y, bars, keyboard, practice } from '../../data/listenPlay';
+
+// Notehead outlines from the same VexFlow 1.2.93 font as the clefs (glyphs vb
+// and v1d at notation size 39), in staff spaces; origin = left edge, centre line.
+const HEAD_BLACK =
+  'M0.736 -0.522C0.747 -0.522 0.764 -0.522 0.767 -0.522C0.767 -0.522 0.769 -0.522 0.769 -0.522C0.769 -0.522 0.786 -0.522 0.8 -0.522C1.053 -0.508 1.202 -0.343 1.202 -0.135C1.202 -0.034 1.168 0.081 1.084 0.191C0.924 0.407 0.663 0.525 0.435 0.525C0.258 0.525 0.107 0.455 0.034 0.312C0.011 0.256 0 0.202 0 0.143C0 -0.163 0.343 -0.503 0.736 -0.522Z';
+const HEAD_WHOLE =
+  'M0.769 -0.517C0.8 -0.522 0.831 -0.522 0.862 -0.522C1.306 -0.522 1.676 -0.326 1.73 -0.062C1.733 -0.037 1.738 -0.014 1.738 0.003C1.738 0.292 1.356 0.525 0.865 0.525C0.373 0.525 0 0.286 0 0.003C0 -0.031 0.003 -0.065 0.014 -0.101C0.081 -0.323 0.396 -0.494 0.769 -0.517M0.812 -0.452C0.797 -0.455 0.778 -0.455 0.764 -0.455C0.587 -0.455 0.48 -0.303 0.48 -0.115C0.48 -0.014 0.511 0.095 0.576 0.205C0.682 0.373 0.837 0.458 0.969 0.458C1.081 0.458 1.179 0.399 1.224 0.275C1.244 0.225 1.252 0.174 1.252 0.121C1.252 -0.132 1.059 -0.413 0.812 -0.452Z';
+
+// Staff geometry (Paper: viewBox 780×196 drawn at 888×223, staff space 8).
+const SP = 8;
+const W = 780;
+const TREBLE_TOP = 40;
+const BASS_TOP = 118;
+const STEM = 3.5 * SP;
+const STEM_W = 1.2;
+const CLEF_X = 10;
+const MUSIC_X = 44; // first bar starts after the clefs
+const BAR_W = (W - MUSIC_X) / bars.length;
+const FIRST = 22; // first beat after a barline
+const BEAT = 58;
+
+const LETTERS = 'CDEFGAB';
+const SEMIS = [0, 2, 4, 5, 7, 9, 11];
+const parse = (p: string) => {
+  const [, l, acc, o] = p.match(/^([A-G])(#?)(\d)$/)!;
+  const i = LETTERS.indexOf(l);
+  return { diatonic: +o * 7 + i, midi: 12 * (+o + 1) + SEMIS[i] + (acc ? 1 : 0) };
+};
+const noteName = (midi: number) => {
+  const pc = midi % 12;
+  const white = SEMIS.indexOf(pc);
+  const oct = Math.floor(midi / 12) - 1;
+  return white >= 0
+    ? { id: `${LETTERS[white]}${oct}`, label: `${LETTERS[white]}${oct}` }
+    : { id: `${LETTERS[SEMIS.indexOf(pc - 1)]}#${oct}`, label: `${LETTERS[SEMIS.indexOf(pc - 1)]} sharp ${oct}` };
+};
+
+// Staff notes
+const E4 = parse('E4').diatonic;
+const G2 = parse('G2').diatonic;
+type Drawn = { step: number; hand: string; pitch: string; x: number; y: number; dur: number; ledgers: number[] };
+const drawn: Drawn[] = [];
+const stepX: number[] = [];
+const stepBar: number[] = [];
+bars.forEach((bar, b) =>
+  bar.forEach((notes, beat) => {
+    const x = MUSIC_X + b * BAR_W + FIRST + beat * BEAT;
+    const step = stepX.push(x) - 1;
+    stepBar.push(b);
+    for (const n of notes) {
+      const d = parse(n.pitch).diatonic;
+      const treble = n.hand === 'rh';
+      const bottom = treble ? TREBLE_TOP + 4 * SP : BASS_TOP + 4 * SP;
+      const y = bottom - (d - (treble ? E4 : G2)) * (SP / 2);
+      const top = bottom - 4 * SP;
+      const ledgers: number[] = [];
+      for (let ly = bottom + SP; ly <= y; ly += SP) ledgers.push(ly);
+      for (let ly = top - SP; ly >= y; ly -= SP) ledgers.push(ly);
+      drawn.push({ step, hand: n.hand, pitch: n.pitch, x, y, dur: n.dur, ledgers });
+    }
+  }),
+);
+const headW = (dur: number) => (dur === 4 ? 1.739 : 1.204) * SP;
+const staffLines = [0, 1, 2, 3, 4].flatMap((k) => [TREBLE_TOP + k * SP, BASS_TOP + k * SP]);
+const barlines = bars.map((_, b) => MUSIC_X + (b + 1) * BAR_W - (b === bars.length - 1 ? 0.6 : 0));
+
+// Keyboard: 28 white keys from C2, black keys centred on the gaps (Paper).
+const low = parse(keyboard.lowest).midi;
+type Key = { id: string; label: string; black: boolean; left: number };
+const keys: Key[] = [];
+let white = 0;
+for (let m = low; white < keyboard.whiteKeys; m++) {
+  const n = noteName(m);
+  const black = n.id.includes('#');
+  keys.push({ ...n, black, left: black ? (white / keyboard.whiteKeys) * 100 - 1.105 : (white / keyboard.whiteKeys) * 100 });
+  if (!black) white++;
+}
+
+const subtitle = (bar: number) =>
+  practice.subtitle
+    .replace('{composer}', practice.composer)
+    .replace('{bar}', String(bar))
+    .replace('{total}', String(practice.barsTotal));
+
+const HAND =
+  'M18 11V6a2 2 0 0 0-4 0v1a2 2 0 0 0-4 0v2a2 2 0 0 0-4 0v3M14 10V4a2 2 0 0 0-4 0v2M10 10.5V6a2 2 0 0 0-4 0v8M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15';
+const TOOL_ICONS: Record<string, string> = {
+  Wait: 'M6 2h12M6 22h12M8 2v4.5a4 4 0 0 0 1.6 3.2L12 12l-2.4 2.3A4 4 0 0 0 8 17.5V22M16 2v4.5a4 4 0 0 1-1.6 3.2L12 12l2.4 2.3a4 4 0 0 1 1.6 3.2V22',
+  Loop: 'M17 2l4 4-4 4M3 11V9a4 4 0 0 1 4-4h14M7 22l-4-4 4-4M21 13v2a4 4 0 0 1-4 4H3',
+  Restart: 'M3 12a9 9 0 1 0 3-6.7M3 4v5h5',
+};
+const steps = bars.flat();
+---
+
+<div
+  class="ps"
+  data-practice
+  data-xs={stepX.map((x) => x.toFixed(2)).join(',')}
+  data-bars={stepBar.join(',')}
+  data-first-bar={practice.firstBar}
+  data-subtitle={practice.subtitle.replace('{composer}', practice.composer).replace('{total}', String(practice.barsTotal))}
+  data-steps={JSON.stringify(steps.map((s) => s.map((n) => [n.pitch, n.hand, n.dur])))}
+>
+  <div class="top" aria-hidden="true">
+    <svg class="ico" width="20" height="20" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" /></svg>
+    <div class="song">
+      <div class="song-title">{practice.title}</div>
+      <div class="song-sub" data-subtitle-text>{subtitle(practice.firstBar)}</div>
+    </div>
+    <div class="hands">
+      <span class="hand"><svg class="ico lh" width="20" height="20" viewBox="0 0 24 24"><path d={HAND} transform="scale(-1 1) translate(-24 0)" /></svg></span>
+      <span class="hand hand--on">
+        <svg class="ico lh" width="17" height="17" viewBox="0 0 24 24"><path d={HAND} stroke-width="2.2" transform="scale(-1 1) translate(-24 0)" /></svg>
+        <svg class="ico rh" width="17" height="17" viewBox="0 0 24 24"><path d={HAND} stroke-width="2.2" /></svg>
+      </span>
+      <span class="hand"><svg class="ico rh" width="20" height="20" viewBox="0 0 24 24"><path d={HAND} /></svg></span>
+    </div>
+    {
+      practice.tools.map((t, i) => (
+        <div class:list={['tool', i === 0 && 'tool--on']}>
+          <svg class="ico" width="18" height="18" viewBox="0 0 24 24"><path d={TOOL_ICONS[t]} /></svg>
+          <span>{t}</span>
+        </div>
+      ))
+    }
+  </div>
+
+  <div class="sheet" aria-hidden="true">
+    <svg class="staff" viewBox={`0 0 ${W} 196`} width="888" height="223">
+      <rect class="cursor" x={stepX[0] - 13} y="26" width="26" height="138" rx="7" />
+      {staffLines.map((y) => <rect class="line" x="0" y={y - 0.5} width={W} height="1" />)}
+      <rect class="bar" x="0" y={TREBLE_TOP} width="1.2" height={BASS_TOP + 4 * SP - TREBLE_TOP} />
+      {barlines.map((x) => <rect class="bar" x={x - 0.6} y={TREBLE_TOP} width="1.2" height={BASS_TOP + 4 * SP - TREBLE_TOP} />)}
+      <text class="num" x="3" y="31">{practice.firstBar}</text>
+      <path class="clef" d={TREBLE_CLEF} transform={`translate(${CLEF_X} ${TREBLE_TOP + 3 * SP}) scale(${SP})`} />
+      <path class="clef" d={BASS_CLEF} transform={`translate(${CLEF_X} ${BASS_TOP + SP}) scale(${SP})`} />
+      {drawn.flatMap((n) => n.ledgers.map((ly) => <rect class="line" x={n.x - headW(n.dur) / 2 - 3.5} y={ly - 0.6} width={headW(n.dur) + 7} height="1.2" />))}
+      {
+        drawn.map((n) => {
+          const w = headW(n.dur);
+          const up = n.y > (n.hand === 'rh' ? TREBLE_TOP : BASS_TOP) + 2 * SP;
+          return (
+            <g class="note" data-step={n.step} data-pitch={n.pitch}>
+              <path d={n.dur === 4 ? HEAD_WHOLE : HEAD_BLACK} transform={`translate(${(n.x - w / 2).toFixed(2)} ${n.y}) scale(${SP})`} />
+              {n.dur < 4 &&
+                (up ? (
+                  <rect x={n.x + w / 2 - STEM_W} y={n.y - STEM} width={STEM_W} height={STEM - 1} />
+                ) : (
+                  <rect x={n.x - w / 2} y={n.y + 1} width={STEM_W} height={STEM - 1} />
+                ))}
+            </g>
+          );
+        })
+      }
+    </svg>
+  </div>
+
+  <div class="keys" role="group" aria-label={a11y.keyboardLabel} data-keys inert>
+    {
+      keys.map((k) => (
+        <button
+          type="button"
+          class:list={['key', k.black ? 'key--black' : 'key--white']}
+          style={`left: ${k.left.toFixed(3)}%`}
+          data-note={k.id}
+          aria-label={k.label}
+          tabindex="-1"
+        />
+      ))
+    }
+  </div>
+</div>
+
+<style>
+  .ps {
+    /* Local colours from Paper that have no token (report: keyboard tints and key edge). */
+    --key-rh-white: var(--color-key-rh);
+    --key-lh-white: var(--color-key-lh);
+    --key-edge: var(--color-key-edge);
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 932px;
+    height: 430px;
+    display: flex;
+    flex-direction: column;
+    transform-origin: 0 0;
+    /* Scale the 932 px canvas to the screen's width (unitless ratio from two lengths). */
+    transform: scale(tan(atan2(100cqw, 932px)));
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    line-height: normal;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  /* Title bar */
+  .top {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    height: 60px;
+    flex-shrink: 0;
+    padding: 0 16px 0 24px;
+  }
+  .ico {
+    flex-shrink: 0;
+    fill: none;
+    stroke: var(--color-ink);
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .ico.lh {
+    stroke: var(--color-left-hand);
+  }
+  .ico.rh {
+    stroke: var(--color-right-hand);
+  }
+  .song {
+    flex: 1 1 0;
+    min-width: 0;
+    padding-left: 8px;
+  }
+  .song-title {
+    font-size: 16px;
+    line-height: 20px;
+    font-weight: var(--weight-semibold);
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .song-sub {
+    font-size: 12px;
+    line-height: 16px;
+    color: var(--color-ink-muted);
+  }
+  .hands {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    height: 40px;
+    padding: 3px;
+    border-radius: var(--radius-pill);
+    background: var(--color-paper);
+    flex-shrink: 0;
+  }
+  .hand {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 34px;
+    border-radius: var(--radius-pill);
+  }
+  .hand--on {
+    width: 52px;
+    gap: 1px;
+    background: var(--color-surface);
+    box-shadow: 0 1px 2px color-mix(in srgb, var(--color-ink) 14%, transparent);
+  }
+  .tool {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    width: 48px;
+    height: 44px;
+    border-radius: var(--radius-md);
+    flex-shrink: 0;
+    font-size: 10px;
+    line-height: 12px;
+    font-weight: var(--weight-semibold);
+    letter-spacing: 0.02em;
+  }
+  .tool--on {
+    background: var(--color-accent-tint);
+    color: var(--color-accent);
+  }
+  .tool--on .ico {
+    stroke: var(--color-accent);
+  }
+
+  /* Sheet */
+  .sheet {
+    flex: 1 1 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 22px 8px;
+  }
+  .staff {
+    width: 888px;
+    height: 223px;
+    flex-shrink: 0;
+    max-width: none;
+    overflow: visible;
+  }
+  .line {
+    fill: color-mix(in srgb, var(--color-ink) 50%, transparent);
+  }
+  .bar {
+    fill: color-mix(in srgb, var(--color-ink) 55%, transparent);
+  }
+  .num {
+    font-size: 11px;
+    font-family: var(--font-sans);
+    fill: var(--color-ink-muted);
+  }
+  .clef {
+    fill: color-mix(in srgb, var(--color-ink) 90%, transparent);
+  }
+  .note {
+    fill: color-mix(in srgb, var(--color-ink) 90%, transparent);
+    transition: fill var(--duration-base) ease;
+  }
+  .note.is-played {
+    fill: var(--color-accent);
+  }
+  .cursor {
+    fill: color-mix(in srgb, var(--color-right-hand) 18%, transparent);
+    transform: translateX(calc(var(--cx, 0) * 1px));
+    transition:
+      transform 520ms var(--ease-in-out-step),
+      opacity var(--duration-base) ease;
+  }
+  .cursor.is-hidden {
+    opacity: 0;
+  }
+
+  /* Keyboard */
+  .keys {
+    position: relative;
+    height: 128px;
+    flex-shrink: 0;
+    background: var(--color-ink);
+  }
+  .key {
+    position: absolute;
+    top: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    appearance: none;
+    -webkit-appearance: none;
+    font: inherit;
+    cursor: pointer;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    transition: background-color var(--duration-fast) ease;
+  }
+  .keys[inert] .key {
+    cursor: default;
+  }
+  .key--white {
+    width: calc(100% / 28);
+    height: 100%;
+    background: var(--color-surface);
+    border: 1px solid var(--key-edge);
+    border-top: 0;
+    border-radius: 0 0 4px 4px;
+  }
+  .key--black {
+    z-index: 1;
+    width: round(2.21%, 1px);
+    height: round(60%, 1px);
+    background: var(--color-ink);
+    border-radius: 0 0 3px 3px;
+  }
+  .key--white[data-lit='rh'] {
+    background: var(--key-rh-white);
+  }
+  .key--white[data-lit='lh'] {
+    background: var(--key-lh-white);
+  }
+  .key--black[data-lit='rh'] {
+    background: var(--color-right-hand);
+  }
+  .key--black[data-lit='lh'] {
+    background: var(--color-left-hand);
+  }
+  .key--white.is-down {
+    background: var(--color-paper);
+  }
+  .key--black.is-down {
+    background: var(--color-ink-muted);
+  }
+  .key.is-wrong {
+    background: var(--color-wrong);
+    transition: none;
+  }
+  .key:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: -4px;
+    box-shadow: none;
+    border-radius: 0 0 4px 4px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .cursor {
+      transition: opacity var(--duration-base) ease;
+    }
+  }
+</style>

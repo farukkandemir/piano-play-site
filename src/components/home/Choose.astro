@@ -1,0 +1,222 @@
+---
+/**
+ * Chapter 1 · Choose — "Any piece you want." (spec §5 item 3)
+ * Paper: "D · The music room" → "Chapter 1 · Choose".
+ * Desktop: six covers in one centred row, every second one dropped 56px.
+ * Below 1120px: a horizontal scroll-snap row with the same stagger.
+ */
+import CoverCard from './CoverCard.astro';
+import { choose } from '../../data/choose';
+---
+
+<section id="choose" class="choose" aria-labelledby="choose-title" data-choose>
+  <div class="container">
+    <header class="head">
+      <div class="heading">
+        <p class="label">{choose.label}</p>
+        <h2 id="choose-title" class="title">{choose.title}</h2>
+      </div>
+      <p class="body intro">{choose.body}</p>
+    </header>
+  </div>
+
+  <div class="wall">
+    <ul class="covers" role="list">
+      {
+        choose.pieces.map((piece, i) => (
+          <li style={`--i: ${i}`}>
+            <CoverCard piece={piece} />
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</section>
+
+<script>
+  // Covers arrive one after another the first time the row comes into view.
+  // Content is visible without JS: covers are only hidden once `is-armed` is set,
+  // and that only happens when IntersectionObserver exists to reveal them.
+  const root = document.querySelector<HTMLElement>('[data-choose]');
+  const wall = root?.querySelector<HTMLElement>('.covers');
+
+  if (root && wall && 'IntersectionObserver' in window) {
+    const reveal = () => {
+      root.classList.add('is-revealed');
+      observer.disconnect();
+    };
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) reveal();
+      },
+      { rootMargin: '0px 0px -10% 0px' },
+    );
+
+    // Already on screen or scrolled past (e.g. reload mid-page): skip the arrival.
+    const box = wall.getBoundingClientRect();
+    if (box.top < window.innerHeight * 0.9) {
+      root.classList.add('is-revealed');
+    } else {
+      root.classList.add('is-armed');
+      observer.observe(wall);
+    }
+  }
+</script>
+
+<style>
+  .choose {
+    --cover-w: 164px;
+    --cover-gap: 16px;
+    --stagger: calc(var(--cover-w) * 0.28); /* 56 at 200 */
+
+    padding-top: clamp(96px, 3.6rem + 9.9vw, 200px);
+  }
+
+  /* Header: label + title, body beside it on desktop (Paper: space-between, align end). */
+  .head {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .heading {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  .label {
+    line-height: 18px;
+  }
+
+  .intro {
+    font-size: var(--text-body-sm); /* 19 */
+    line-height: 29px;
+    max-width: 30rem;
+  }
+
+  /* Cover wall. Mobile/tablet: a scroll-snap row that bleeds to the viewport
+     edges, first card aligned with the content column. */
+  .wall {
+    margin-top: clamp(40px, 1.5rem + 3vw, 64px);
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: var(--gutter);
+    scrollbar-width: none;
+    /* Room for the arrival offset and the image scale so nothing clips. */
+    padding-bottom: 20px;
+    margin-bottom: -20px;
+  }
+
+  .wall::-webkit-scrollbar {
+    display: none;
+  }
+
+  .covers {
+    display: flex;
+    gap: var(--cover-gap);
+    width: max-content;
+    margin: 0;
+    padding: 0 var(--gutter);
+    list-style: none;
+  }
+
+  .covers li {
+    flex: none;
+    width: var(--cover-w);
+    scroll-snap-align: start;
+  }
+
+  .covers li:nth-child(even) {
+    padding-top: var(--stagger);
+  }
+
+  @media (min-width: 768px) {
+    .choose {
+      --cover-w: 200px;
+      --cover-gap: 24px;
+    }
+
+    .intro {
+      max-width: 420px;
+    }
+  }
+
+  /* Desktop: everything fits in one centred row, as drawn. */
+  @media (min-width: 1120px) {
+    .head {
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 40px;
+      padding-inline: 56px;
+    }
+
+    .heading {
+      max-width: 560px;
+    }
+
+    .intro {
+      flex-shrink: 0;
+      width: 420px;
+      padding-bottom: 6px;
+    }
+
+    .wall {
+      overflow: visible;
+      scroll-snap-type: none;
+      max-width: calc(var(--content-max) + 2 * var(--gutter));
+      margin-inline: auto;
+      padding-inline: var(--gutter);
+    }
+
+    .covers {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, var(--cover-w)));
+      justify-content: center;
+      width: auto;
+      padding: 0;
+    }
+
+    .covers li {
+      width: auto;
+    }
+
+    .covers li:nth-child(even) {
+      /* Scale the drop with the card while the row is squeezed below 1440. */
+      padding-top: min(56px, 3.9vw);
+    }
+  }
+
+  /* Arrival: opacity 0→1, translateY 16→0, 400 ms ease-out, 60 ms stagger. */
+  .choose.is-armed .covers li {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+
+  .choose.is-revealed .covers li {
+    transition:
+      opacity var(--duration-base) var(--ease-out),
+      transform var(--duration-base) var(--ease-out);
+    transition-delay: calc(var(--i) * 60ms);
+  }
+
+  .choose.is-armed.is-revealed .covers li {
+    opacity: 1;
+    transform: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .choose.is-armed .covers li {
+      transform: none;
+    }
+  }
+
+  @media print {
+    .choose.is-armed .covers li {
+      opacity: 1;
+      transform: none;
+    }
+  }
+</style>

@@ -1,0 +1,78 @@
+---
+/**
+ * The phone around the practice screen: upright landscape, never tilted,
+ * shadowed or animated (Apple marketing rules). Only the slotted screen moves.
+ *
+ * With `bezel.useImage` and src/assets/images/iphone-bezel-landscape.png present,
+ * Apple's bezel PNG is drawn over the screen, which sits at `bezel.screenInsets`.
+ * Otherwise a neutral placeholder frame is drawn (Paper A9B-0 / A9C-0).
+ */
+import type { ImageMetadata } from 'astro';
+import { Image } from 'astro:assets';
+import { bezel } from '../../data/listenPlay';
+
+const images = import.meta.glob<{ default: ImageMetadata }>('../../assets/images/iphone-bezel-*.png', {
+  eager: true,
+});
+const found = Object.entries(images).find(([path]) => path.endsWith(`/${bezel.file}`))?.[1]?.default;
+const art = bezel.useImage ? found : undefined;
+
+const p = bezel.placeholder;
+const i = bezel.screenInsets;
+const style = art
+  ? `--phone-ratio: ${art.width} / ${art.height}; --screen-top: ${i.top}%; --screen-right: ${i.right}%; --screen-bottom: ${i.bottom}%; --screen-left: ${i.left}%; --screen-radius: ${bezel.screenRadius};`
+  : `--phone-ratio: ${p.width} / ${p.height}; --phone-radius: ${(p.radius / p.width) * 100}; --phone-border: ${(p.border / p.width) * 100}; --screen-radius: ${(p.screenRadius / p.width) * 100};`;
+---
+
+<div class="phone-box">
+  <div class:list={['phone', art ? 'phone--art' : 'phone--placeholder']} style={style}>
+    <div class="screen">
+      <slot />
+    </div>
+    {art && <Image class="bezel" src={art} alt="" widths={[art.width / 2, art.width]} sizes="(min-width: 1040px) 964px, calc(100vw - 40px)" loading="lazy" decoding="async" />}
+  </div>
+</div>
+
+<style>
+  .phone-box {
+    container-type: inline-size;
+    width: 100%;
+  }
+  .phone {
+    /* The placeholder frame (Paper A9B-0), a touch darker than ink. */
+    --phone-frame: var(--color-phone-frame);
+    position: relative;
+    width: 100%;
+    aspect-ratio: var(--phone-ratio);
+  }
+  .phone--placeholder {
+    background: var(--phone-frame);
+    border-radius: calc(var(--phone-radius) * 1cqw);
+    padding: calc(var(--phone-border) * 1cqw);
+  }
+  .phone--placeholder .screen {
+    width: 100%;
+    height: 100%;
+  }
+  .phone--art .screen {
+    position: absolute;
+    inset: var(--screen-top) var(--screen-right) var(--screen-bottom) var(--screen-left);
+  }
+  .screen {
+    container-type: inline-size;
+    position: relative;
+    overflow: hidden;
+    /* cqw here resolves against .phone-box (an element never queries itself). */
+    border-radius: calc(var(--screen-radius) * 1cqw);
+    background: var(--color-bg);
+  }
+  .bezel {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    pointer-events: none;
+    user-select: none;
+  }
+</style>

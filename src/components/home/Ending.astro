@@ -1,0 +1,113 @@
+---
+/**
+ * Ending · the room at night (Paper ADT-0). The painted room under an ink gradient,
+ * one line and the store button. The painting is the owner's chosen art: framing
+ * follows Paper exactly (image fills the card width, shifted up 760 of 1770px).
+ */
+import { Image } from 'astro:assets';
+import AppStoreButton from '../shared/AppStoreButton.astro';
+import room from '../../assets/images/hero-piano.jpg';
+import { ending } from '../../data/ending';
+---
+
+<section class="ending container" aria-labelledby="ending-title">
+  <div class="card">
+    <Image
+      src={room}
+      alt={ending.imageAlt}
+      widths={[640, 1051]}
+      sizes="(min-width: 1440px) 1328px, calc(100vw - 40px)"
+      format="webp"
+      quality={80}
+      loading="lazy"
+      decoding="async"
+      class="room"
+    />
+    <div class="shade" aria-hidden="true"></div>
+    <div class="content">
+      <h2 id="ending-title" class="title-ending">{ending.title}</h2>
+      <AppStoreButton variant="button-light" />
+    </div>
+  </div>
+</section>
+
+<style>
+  .ending {
+    /* Light text on the ink shade. */
+    --ending-fg: var(--color-on-ink);
+    padding-top: clamp(112px, 60px + 11vw, 220px);
+  }
+
+  .card {
+    position: relative;
+    display: flex;
+    min-height: 520px;
+    border-radius: var(--radius-panel);
+    overflow: clip;
+    background: var(--color-ink);
+    /* Keeps the rounded clip crisp in Safari while the image decodes. */
+    isolation: isolate;
+  }
+
+  .room {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    /* Phones: portrait card, keep the piano in view. */
+    object-position: 66% 62.8%;
+  }
+
+  /* Phones: text sits low, so the shade rises from the bottom. */
+  .shade {
+    position: absolute;
+    inset: 0;
+    background-image: linear-gradient(
+      in oklab 0deg,
+      color-mix(in oklab, var(--color-ink) 92%, transparent) 0%,
+      color-mix(in oklab, var(--color-ink) 75%, transparent) 45%,
+      color-mix(in oklab, var(--color-ink) 35%, transparent) 100%
+    );
+  }
+
+  .content {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    gap: 28px;
+    padding: 36px 28px;
+  }
+
+  .title-ending {
+    max-width: 560px;
+    color: var(--ending-fg);
+    font-size: clamp(2.75rem, 1.6rem + 4.2vw, 4.5rem); /* 44 → 72 */
+    line-height: 1;
+    letter-spacing: var(--tracking-title);
+    font-weight: var(--weight-semibold);
+  }
+
+  @media (min-width: 768px) {
+    .card {
+      height: 560px;
+    }
+    .room {
+      /* Paper: the image fills the card width at 1328×1770 and sits at top −760. */
+      object-position: 50% 62.8%;
+    }
+    .shade {
+      background-image: linear-gradient(
+        in oklab 90deg,
+        color-mix(in oklab, var(--color-ink) 92%, transparent) 0%,
+        color-mix(in oklab, var(--color-ink) 75%, transparent) 45%,
+        color-mix(in oklab, var(--color-ink) 35%, transparent) 100%
+      );
+    }
+    .content {
+      justify-content: center;
+      padding: 0 72px;
+    }
+  }
+</style>

@@ -1,0 +1,83 @@
+---
+import { support } from '../../data/support';
+const { contact } = support;
+---
+
+<section class="card" aria-labelledby="contact-title">
+  <div class="text">
+    <h2 id="contact-title" class="label-dark">{contact.label}</h2>
+    <p class="email">{contact.email}</p>
+  </div>
+  <a class="button" href={`mailto:${contact.email}`}>{contact.button}</a>
+</section>
+
+<style>
+  .card {
+    /* Tones on ink. */
+    --card-fg: var(--color-on-ink);
+    --card-muted: var(--color-on-ink-muted);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 20px;
+    padding: 24px;
+    border-radius: 24px;
+    background: var(--color-ink);
+  }
+  @media (min-width: 768px) {
+    .card {
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+      padding: 28px 32px;
+    }
+  }
+  .text {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+  }
+  .label-dark {
+    font-size: var(--text-label);
+    line-height: 18px;
+    font-weight: var(--weight-medium);
+    color: var(--card-muted);
+  }
+  .email {
+    font-size: clamp(1.25rem, 1.1rem + 0.6vw, 1.5rem); /* 20 → 24 */
+    line-height: 1.25;
+    font-weight: var(--weight-semibold);
+    letter-spacing: -0.01em;
+    color: var(--card-fg);
+    overflow-wrap: anywhere;
+    user-select: all;
+  }
+  .button {
+    flex-shrink: 0;
+    display: inline-flex;
+    padding: 13px 22px;
+    border-radius: 14px;
+    background: var(--card-fg);
+    color: var(--color-ink);
+    font-size: var(--text-small);
+    line-height: 18px;
+    font-weight: var(--weight-medium);
+    text-decoration: none;
+    transition:
+      background-color var(--duration-fast) ease,
+      transform var(--duration-fast) var(--ease-out);
+  }
+  .button:hover {
+    background: var(--color-surface);
+  }
+  .button:active {
+    transform: scale(0.97);
+  }
+  .button:focus-visible {
+    box-shadow:
+      0 0 0 3px var(--color-ink),
+      0 0 0 5px var(--color-accent-lifted);
+    border-radius: 14px;
+  }
+</style>

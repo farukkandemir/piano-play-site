@@ -1,0 +1,56 @@
+---
+import Base from '../layouts/Base.astro';
+---
+
+<Base title="Not found · piano.play" description="This page isn’t here." noindex>
+  <section class="lost">
+    <h1 class="h1">Not here.</h1>
+    <p class="line">This page doesn’t exist, or it moved.</p>
+    <a class="home" href="/">Back to piano.play</a>
+  </section>
+</Base>
+
+<style>
+  .lost {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 18px;
+    width: 100%;
+    max-width: calc(var(--reading-max) + 2 * var(--gutter));
+    min-height: 60vh;
+    margin-inline: auto;
+    padding: clamp(48px, 20px + 7vw, 96px) var(--gutter) 120px;
+  }
+  .h1 {
+    font-size: clamp(3rem, 2.2rem + 3.2vw, 4.5rem);
+    line-height: 1;
+    letter-spacing: var(--tracking-title);
+    font-weight: var(--weight-semibold);
+  }
+  .line {
+    font-size: var(--text-body-sm);
+    line-height: 29px;
+    color: var(--color-ink-muted);
+  }
+  .home {
+    margin-top: 12px;
+    padding: 13px 22px;
+    border-radius: 14px;
+    background: var(--color-ink);
+    color: var(--color-bg);
+    font-size: var(--text-small);
+    line-height: 18px;
+    font-weight: var(--weight-medium);
+    text-decoration: none;
+    transition:
+      opacity var(--duration-fast) ease,
+      transform var(--duration-fast) var(--ease-out);
+  }
+  .home:hover {
+    opacity: 0.88;
+  }
+  .home:active {
+    transform: scale(0.97);
+  }
+</style>

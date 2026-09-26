@@ -1,0 +1,31 @@
+---
+import '../styles/global.css';
+import Nav from '../components/shared/Nav.astro';
+import Footer from '../components/shared/Footer.astro';
+import Meta from '../components/shared/Meta.astro';
+
+interface Props {
+  title?: string;
+  description?: string;
+  /** Hide nav and footer (not used yet, kept for the 404 page if needed). */
+  bare?: boolean;
+  /** Keep the page out of search results (404). */
+  noindex?: boolean;
+}
+
+const { title, description, bare = false, noindex = false } = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <Meta title={title} description={description} noindex={noindex} />
+  </head>
+  <body>
+    {!bare && <Nav />}
+    <main id="main">
+      <slot />
+    </main>
+    {!bare && <Footer />}
+  </body>
+</html>

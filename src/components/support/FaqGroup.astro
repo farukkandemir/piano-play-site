@@ -1,0 +1,155 @@
+---
+/**
+ * One group of questions: an h2 and native <details> items.
+ * Height animates where the browser can interpolate to `auto`
+ * (`interpolate-size` + `::details-content`); elsewhere it opens instantly.
+ * No JavaScript.
+ */
+interface Props {
+  id: string;
+  title: string;
+  items: ReadonlyArray<{ q: string; a: string }>;
+}
+const { id, title, items } = Astro.props;
+---
+
+<section class="group" aria-labelledby={id}>
+  <h2 id={id} class="group-title">{title}</h2>
+  <div class="items">
+    {
+      items.map((item) => (
+        <details class="item">
+          <summary>
+            <span class="q">{item.q}</span>
+            <span class="icon" aria-hidden="true">
+              <span class="bar" />
+              <span class="bar bar--v" />
+            </span>
+          </summary>
+          <p class="a">{item.a}</p>
+        </details>
+      ))
+    }
+  </div>
+</section>
+
+<style>
+  .group-title {
+    padding-bottom: 16px;
+    font-size: var(--text-label);
+    line-height: 18px;
+    font-weight: var(--weight-semibold);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-accent);
+  }
+  .items {
+    border-bottom: 1px solid var(--color-border);
+  }
+  .item {
+    border-top: 1px solid var(--color-border);
+  }
+
+  summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    padding-block: 22px;
+    list-style: none;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  summary::-webkit-details-marker {
+    display: none;
+  }
+  summary:focus-visible {
+    border-radius: 8px;
+  }
+  .q {
+    font-size: var(--text-body-sm);
+    line-height: 24px;
+    font-weight: var(--weight-medium);
+    color: var(--color-ink);
+    text-wrap: pretty;
+  }
+
+  /* Plus that folds into a minus. */
+  .icon {
+    position: relative;
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    color: var(--color-ink-muted);
+    transition: color var(--duration-fast) ease;
+  }
+  .bar {
+    position: absolute;
+    left: 3px;
+    right: 3px;
+    top: calc(50% - 0.75px);
+    height: 1.5px;
+    border-radius: 1px;
+    background: currentColor;
+    transition: transform 280ms var(--ease-out);
+  }
+  .bar--v {
+    transform: rotate(90deg);
+  }
+  summary:hover .icon {
+    color: var(--color-ink);
+  }
+  summary:active .icon {
+    transform: scale(0.9);
+  }
+  .item[open] .icon {
+    color: var(--color-accent);
+  }
+  .item[open] .bar--v {
+    transform: rotate(0deg);
+  }
+
+  .a {
+    max-width: 640px;
+    padding-bottom: 22px;
+    margin-top: -10px; /* summary→answer gap of 12px, as in Paper */
+    font-size: 17px;
+    line-height: 27px;
+    color: var(--color-ink-muted);
+    text-wrap: pretty;
+  }
+
+  @supports (interpolate-size: allow-keywords) {
+    .item {
+      interpolate-size: allow-keywords;
+    }
+    .item::details-content {
+      block-size: 0;
+      overflow: clip;
+      opacity: 0;
+      transition:
+        block-size 320ms var(--ease-out),
+        opacity 240ms ease,
+        content-visibility 320ms allow-discrete;
+    }
+    .item[open]::details-content {
+      block-size: auto;
+      opacity: 1;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .bar,
+    .icon {
+      transition: none;
+    }
+    @supports (interpolate-size: allow-keywords) {
+      /* Opacity only: no height movement. */
+      .item::details-content {
+        transition:
+          opacity 200ms ease,
+          content-visibility 200ms allow-discrete;
+      }
+    }
+  }
+</style>

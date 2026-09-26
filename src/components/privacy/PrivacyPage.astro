@@ -1,0 +1,84 @@
+---
+import ShortVersion from './ShortVersion.astro';
+import DataTable from './DataTable.astro';
+import SmallPrint from './SmallPrint.astro';
+import { privacy } from '../../data/privacy';
+
+const updated = new Date(`${privacy.updated}T12:00:00Z`);
+const updatedText = updated.toLocaleDateString('en-GB', {
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric',
+  timeZone: 'UTC',
+});
+---
+
+<article class="page">
+  <header class="head">
+    <h1 class="h1">{privacy.title}</h1>
+    <p class="meta">
+      {privacy.updatedLabel} <time datetime={privacy.updated}>{updatedText}</time>
+    </p>
+  </header>
+
+  <ShortVersion />
+
+  <div class="leaves">
+    <DataTable />
+  </div>
+
+  <section class="rights" aria-labelledby="rights-title">
+    <h2 id="rights-title" class="h2">{privacy.rights.title}</h2>
+    <p class="text">{privacy.rights.text}</p>
+  </section>
+
+  <SmallPrint />
+</article>
+
+<style>
+  .page {
+    width: 100%;
+    max-width: calc(var(--reading-max) + 2 * var(--gutter));
+    margin-inline: auto;
+    padding: 0 var(--gutter) 120px;
+  }
+  .head {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: clamp(48px, 20px + 7vw, 96px) 0 48px;
+  }
+  .h1 {
+    font-size: clamp(3rem, 2.2rem + 3.2vw, 4.5rem); /* 48 → 72 */
+    line-height: 1;
+    letter-spacing: var(--tracking-title);
+    font-weight: var(--weight-semibold);
+  }
+  .meta {
+    font-size: var(--text-small);
+    line-height: 18px;
+    color: var(--color-ink-muted);
+  }
+  .leaves {
+    padding-top: 72px;
+  }
+  .rights {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding-top: 72px;
+    padding-bottom: 48px;
+  }
+  .h2 {
+    font-size: clamp(1.625rem, 1.4rem + 0.8vw, 1.875rem);
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+    font-weight: var(--weight-semibold);
+  }
+  .text {
+    font-size: 17px;
+    line-height: 27px;
+    color: var(--color-ink-muted);
+    text-wrap: pretty;
+  }
+</style>
