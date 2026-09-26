@@ -4,11 +4,11 @@
  * HTML/SVG so it can move. It is drawn once at its design size and scaled as a
  * whole to the phone's screen, so it looks the same on every width.
  *
- * Title bar and staff are decorative (aria-hidden). The keyboard is real
- * <button>s; it stays inert until the Play chapter (src/scripts/listen-play.ts).
+ * Purely decorative: Listen.astro hides the phone from assistive tech and
+ * gives a text equivalent. Animated by src/scripts/listen.ts.
  */
 import { TREBLE_CLEF, BASS_CLEF } from '../../data/clefPaths';
-import { a11y, bars, keyboard, practice } from '../../data/listenPlay';
+import { bars, keyboard, practice } from '../../data/listen';
 
 // Notehead outlines from the same VexFlow 1.2.93 font as the clefs (glyphs vb
 // and v1d at notation size 39), in staff spaces; origin = left edge, centre line.
@@ -41,9 +41,7 @@ const noteName = (midi: number) => {
   const pc = midi % 12;
   const white = SEMIS.indexOf(pc);
   const oct = Math.floor(midi / 12) - 1;
-  return white >= 0
-    ? { id: `${LETTERS[white]}${oct}`, label: `${LETTERS[white]}${oct}` }
-    : { id: `${LETTERS[SEMIS.indexOf(pc - 1)]}#${oct}`, label: `${LETTERS[SEMIS.indexOf(pc - 1)]} sharp ${oct}` };
+  return white >= 0 ? `${LETTERS[white]}${oct}` : `${LETTERS[SEMIS.indexOf(pc - 1)]}#${oct}`;
 };
 
 // Staff notes
@@ -77,13 +75,13 @@ const barlines = bars.map((_, b) => MUSIC_X + (b + 1) * BAR_W - (b === bars.leng
 
 // Keyboard: 28 white keys from C2, black keys centred on the gaps (Paper).
 const low = parse(keyboard.lowest).midi;
-type Key = { id: string; label: string; black: boolean; left: number };
+type Key = { id: string; black: boolean; left: number };
 const keys: Key[] = [];
 let white = 0;
 for (let m = low; white < keyboard.whiteKeys; m++) {
-  const n = noteName(m);
-  const black = n.id.includes('#');
-  keys.push({ ...n, black, left: black ? (white / keyboard.whiteKeys) * 100 - 1.105 : (white / keyboard.whiteKeys) * 100 });
+  const id = noteName(m);
+  const black = id.includes('#');
+  keys.push({ id, black, left: black ? (white / keyboard.whiteKeys) * 100 - 1.105 : (white / keyboard.whiteKeys) * 100 });
   if (!black) white++;
 }
 
@@ -112,7 +110,7 @@ const steps = bars.flat();
   data-subtitle={practice.subtitle.replace('{composer}', practice.composer).replace('{total}', String(practice.barsTotal))}
   data-steps={JSON.stringify(steps.map((s) => s.map((n) => [n.pitch, n.hand, n.dur])))}
 >
-  <div class="top" aria-hidden="true">
+  <div class="top">
     <svg class="ico" width="20" height="20" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" /></svg>
     <div class="song">
       <div class="song-title">{practice.title}</div>
@@ -136,7 +134,7 @@ const steps = bars.flat();
     }
   </div>
 
-  <div class="sheet" aria-hidden="true">
+  <div class="sheet">
     <svg class="staff" viewBox={`0 0 ${W} 196`} width="888" height="223">
       <rect class="cursor" x={stepX[0] - 13} y="26" width="26" height="138" rx="7" />
       {staffLines.map((y) => <rect class="line" x="0" y={y - 0.5} width={W} height="1" />)}
@@ -166,19 +164,8 @@ const steps = bars.flat();
     </svg>
   </div>
 
-  <div class="keys" role="group" aria-label={a11y.keyboardLabel} data-keys inert>
-    {
-      keys.map((k) => (
-        <button
-          type="button"
-          class:list={['key', k.black ? 'key--black' : 'key--white']}
-          style={`left: ${k.left.toFixed(3)}%`}
-          data-note={k.id}
-          aria-label={k.label}
-          tabindex="-1"
-        />
-      ))
-    }
+  <div class="keys" data-keys>
+    {keys.map((k) => <span class:list={['key', k.black ? 'key--black' : 'key--white']} style={`left: ${k.left.toFixed(3)}%`} data-note={k.id} />)}
   </div>
 </div>
 
@@ -351,19 +338,7 @@ const steps = bars.flat();
   .key {
     position: absolute;
     top: 0;
-    margin: 0;
-    padding: 0;
-    border: 0;
-    appearance: none;
-    -webkit-appearance: none;
-    font: inherit;
-    cursor: pointer;
-    touch-action: manipulation;
-    -webkit-tap-highlight-color: transparent;
     transition: background-color var(--duration-fast) ease;
-  }
-  .keys[inert] .key {
-    cursor: default;
   }
   .key--white {
     width: calc(100% / 28);
@@ -391,22 +366,6 @@ const steps = bars.flat();
   }
   .key--black[data-lit='lh'] {
     background: var(--color-left-hand);
-  }
-  .key--white.is-down {
-    background: var(--color-paper);
-  }
-  .key--black.is-down {
-    background: var(--color-ink-muted);
-  }
-  .key.is-wrong {
-    background: var(--color-wrong);
-    transition: none;
-  }
-  .key:focus-visible {
-    outline: 2px solid var(--color-accent);
-    outline-offset: -4px;
-    box-shadow: none;
-    border-radius: 0 0 4px 4px;
   }
 
   @media (prefers-reduced-motion: reduce) {

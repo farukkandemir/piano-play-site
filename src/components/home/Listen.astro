@@ -1,0 +1,85 @@
+---
+/**
+ * 02 · Listen (docs/spec.md §5 item 4): the header, and the phone below it
+ * playing the passage on the practice screen. The phone is decorative, with a
+ * text equivalent. Motion and the chapter bar: src/scripts/listen.ts.
+ */
+import { a11y, listen } from '../../data/listen';
+import PhoneFrame from './PhoneFrame.astro';
+import PracticeScreen from './PracticeScreen.astro';
+import ChapterBar from './ChapterBar.astro';
+---
+
+<section id="listen" class="listen" aria-labelledby="listen-title" data-listen>
+  <div class="container inner">
+    <div class="head">
+      <p class="label">{listen.label}</p>
+      <h2 class="title" id="listen-title">{listen.title}</h2>
+      <p class="body line">{listen.line}</p>
+    </div>
+
+    <div class="device">
+      <p class="visually-hidden">{a11y.screenDescription}</p>
+      <div aria-hidden="true">
+        <PhoneFrame>
+          <PracticeScreen />
+        </PhoneFrame>
+      </div>
+    </div>
+  </div>
+
+  <ChapterBar />
+</section>
+
+<script>
+  import { startListen } from '../../scripts/listen';
+  startListen();
+</script>
+
+<style>
+  .listen {
+    /* Local: the viewport height kept free around the phone, so it fits on screen. */
+    --lp-reserve: 360px;
+    padding-top: clamp(96px, 3.6rem + 9.9vw, 200px);
+    /* Room below the phone so the pinned chapter bar never covers its keys. */
+    padding-bottom: 96px;
+  }
+  .inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 32px;
+  }
+
+  .head {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
+    text-align: center;
+  }
+  .label {
+    line-height: 18px;
+  }
+  .line {
+    max-width: 640px;
+    font-size: var(--text-body-sm);
+    line-height: 29px;
+  }
+
+  .device {
+    width: min(100%, 964px, max(320px, calc((100svh - var(--lp-reserve)) * 964 / 462)));
+  }
+
+  @media (min-width: 768px) {
+    .inner {
+      gap: 56px;
+    }
+  }
+  @media (max-width: 767px) {
+    .line {
+      font-size: var(--text-body);
+      line-height: var(--leading-body);
+    }
+  }
+</style>

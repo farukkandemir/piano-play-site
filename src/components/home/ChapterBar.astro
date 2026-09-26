@@ -1,10 +1,10 @@
 ---
 /**
- * Chapter bar (Paper ADL-0): pinned to the bottom of the viewport from when
- * #choose enters until the Listen/Play section leaves. The current chapter is
- * filled ink. Shown, hidden and kept current by src/scripts/listen-play.ts.
+ * Chapter bar (Paper ADL-0): pinned to the bottom of the viewport once the
+ * visitor scrolls into the hero, until the Listen section leaves. The current
+ * chapter is filled ink. Shown, hidden and kept current by src/scripts/listen.ts.
  */
-import { chapterBar } from '../../data/listenPlay';
+import { chapterBar } from '../../data/listen';
 ---
 
 <nav class="chapter-bar" aria-label={chapterBar.ariaLabel} data-chapter-bar hidden>

@@ -1,6 +1,7 @@
 # getpianoplay.com: site spec
 
-Written 25 September 2026, from the design session in the app repo. This file is meant to be enough
+Written 25 September 2026, from the design session in the app repo. Updated 26 September 2026 after
+the v1 build (hero replaced, Play chapter folded into the hero, sound added). This file is meant to be enough
 to plan and build the site in a fresh session. Read it fully before planning.
 
 ## 1. What this is
@@ -35,7 +36,8 @@ The owner's other product, pianolearn.app, is a separate brand. Never link the t
 
 - **Astro**, static output. Plain HTML and CSS per page; a little TypeScript only where motion needs it.
   No UI framework islands unless a later need proves it.
-- **Cloudflare Pages**, deploy on push to `main`. The domain is already at Cloudflare.
+- **Cloudflare Pages**, deploy on push to `main`. The domain is already at Cloudflare. (Cloudflare now
+  recommends Workers static assets for new projects; the static `dist/` + `_headers` works on both.)
 - **Its own repo**: this folder, `~/Desktop/piano-play-site`, a private GitHub repo (not created yet).
 - **Fonts:** Outfit (the app's font), self-hosted as WOFF2, variable weight. No Google Fonts request
   at runtime (privacy page says no tracking).
@@ -86,15 +88,22 @@ Body 19–20/29–30 Regular in ink-muted. Labels 14 Medium in plum. Radii: 22 (
 Top to bottom:
 
 1. **Nav.** "piano.play" wordmark left; "Coming soon to the App Store" right (quiet text, no link).
-2. **Hero.** Headline "That piece you always wanted to play." Sub: "Connect your piano, open any
-   piece, and practise at your own pace." Under it, a **full-width grand staff** (treble and bass)
-   running off both edges: three bars of chords, the played notes plum, a blue cursor band on the
-   current chord, the rest ink.
-   - Build it as inline SVG. Clefs: use the same glyph outlines the app uses (app repo
-     `src/components/library/clefPaths.ts`, from VexFlow 1.2.93, MIT). Noto Music in Paper was only a stand-in.
-   - Make it **its own component** (`Hero.astro` or similar): the owner may swap the hero later.
-   - Motion: the cursor steps chord to chord (~900 ms per chord, `cubic-bezier(0.77,0,0.175,1)` for the
-     move), each chord turns plum as it's reached. Loops slowly; pauses when off screen.
+2. **Hero: "Try it".** (Replaces the grand-staff hero, which is kept in the repo as `Hero.astro`.)
+   Label "Try it", headline "Play the first notes of Für Elise.", sub "The sheet waits for you. Tap the
+   glowing key, or use your keyboard." Below: a full-bleed treble staff with the opening
+   (E D♯ | E D♯ E B D C | A, sixteenths) and a hairline "pencil" keyboard of about an octave
+   (G4–A5 desktop, G4–F5 phones), one composed piece that fits one viewport.
+   - Wait Mode: a fixed "now" band at the centre; the music glides into it. The lit key breathes plum
+     and (desktop) shows its computer key; home row A S D F G H J K L = G4…A5.
+   - Right key: a plum thread rises from the key to the note, the note blooms plum, the music glides on.
+     Wrong key: a faint thread rises partway and fades. After the last note the phrase glows and the
+     copy changes to "That's piano.play." / "Now imagine it on your own piano." (draft) with Play again
+     and the App Store button.
+   - Sound: real Salamander Grand Piano V3 samples (CC BY 3.0, credited in the footer), 7 AAC files
+     (~300 KB) in `public/sounds/piano/`, same origin, loaded when the page is idle and the hero is on
+     screen, only played after a tap. A sound toggle is remembered in localStorage.
+     Re-generate with `scripts/extract-samples.py` from the owner's `salamander-8v.sf2`.
+   - Reduced motion: no gliding, threads or breathing; colour changes only.
 3. **01 · Choose — "Any piece you want."** Text: "Bring your own sheet music from MuseScore, or start
    with free pieces from Bach to Satie. Each one gets a painted cover." Below: a row of six covers at
    staggered heights (Clair de Lune, Gymnopédie No. 1, Prelude in C, Für Elise, Nocturne Op. 9 No. 2,
@@ -104,22 +113,16 @@ Top to bottom:
      `liszt-liebestraum-3`. Serve at 2× the displayed size.
    - Motion: covers arrive one after another as the row comes into view (opacity 0→1, translateY 16→0,
      400 ms ease-out, 60 ms stagger). Once.
-4. **02 · Listen and 03 · Play — one pinned phone.** Headline changes with the chapter:
-   Listen: "Hear it before you play it." / "A real grand piano plays the passage, and every note lights up
-   as it sounds." Play: title and line to be written with the owner (idea: "Your piano listens." /
-   "The sheet waits until you play the right notes, then moves on.").
+4. **02 · Listen.** "Hear it before you play it." / "A real grand piano plays the passage, and every
+   note lights up as it sounds." (Play is now the hero, so this section is Listen only.)
    - The phone: **Apple's official iPhone bezel** (Apple Design Resources, landscape), upright, no
      tilt, no added shadow or reflection, never animated itself (Apple marketing rules). Only the screen
-     content moves.
-   - Screen: the app's practice screen (title bar, grand staff, on-screen keyboard), rebuilt as SVG/HTML
-     so it can animate. Values from Paper frame "Practice V1 · default" (page 1).
-   - Listen state: the cursor runs across the bar, notes light up in turn, matching keys light on the
-     keyboard.
-   - Play state: the keyboard becomes interactive (mouse, touch, and computer keys A S D F …). The
-     highlighted key must be pressed; wrong key = a small shake, right key = the note turns plum and the
-     cursor moves on. Silent in v1 (no audio).
-   - **Chapter bar** pinned at the bottom of the viewport while this section is on screen: Choose ·
-     Listen · Play, the current one filled ink. Tapping a chapter scrolls to it.
+     content moves. Until the owner adds the PNG, a plain frame is shown (see `src/data/listen.ts`).
+   - Screen: the app's practice screen (title bar, grand staff, on-screen keyboard), rebuilt as SVG/HTML,
+     values from Paper frame "Practice V1 · default". The cursor runs across the bar, notes light up in
+     turn, matching keys light. Display only.
+   - **Chapter bar** pinned at the bottom: Try · Choose · Listen, the current one filled ink. Appears
+     after the visitor scrolls into the page, hides over the ending. Tapping a chapter scrolls to it.
 5. **Ending.** The painted piano room under an ink gradient (left 92% → right 35%), "Whenever you're
    ready." and a light "Coming soon to the App Store" button. Image: app repo
    `piano-play/assets/images/hero-piano.jpg` (placeholder art the owner likes here; do not re-crop or
@@ -214,18 +217,18 @@ Written against Apple guideline 5.1.1(i), GDPR Art. 13 and COPPA basics. Not leg
 
 ## 10. Open items (owner)
 
-1. **support@getpianoplay.com does not exist yet.** Cloudflare Email Routing can forward it for free.
+1. ~~support@getpianoplay.com~~ Done 25 Sep 2026: Cloudflare Email Routing forwards it.
 2. **The app's piano sound downloads from `sounds.pianolearn.app`** (app repo `src/sound/soundfont.ts`).
    Move it to a getpianoplay.com subdomain before launch (same R2 bucket, new custom domain).
 3. **Verify privacy facts:** Sentry retention on the owner's plan (30 days assumed); the cover server
    keeps the install ID forever today, next to title and composer (clearing it after 24 h was discussed,
    owner deferred it); Supabase region.
-4. **Play chapter copy** to write with the owner.
-5. **Hero** may be replaced later; see the Keys and magnified-bar explorations in Paper.
+4. **Hero end copy** ("That's piano.play." / "Now imagine it on your own piano.") to confirm.
+5. **OG image**: replace the placeholder `public/og.png` with a still of the new hero.
 6. After the site is live: put `https://getpianoplay.com/privacy` into the app's `PRIVACY_URL` and into
    App Store Connect, and the support URL into App Store Connect.
 
 ## 11. Out of scope for v1
 
 Email list, blog, analytics, cookies, languages other than English, Android, a web version of the app,
-audio on the site, iPad frames.
+audio anywhere except the hero, iPad frames.

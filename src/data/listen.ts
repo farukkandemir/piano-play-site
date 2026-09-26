@@ -1,33 +1,23 @@
 /**
- * Copy and content for "02 · Listen / 03 · Play" (docs/spec.md §5 item 4),
- * plus the chapter bar that stays pinned from Choose to Play.
+ * Copy and content for "02 · Listen" (docs/spec.md §5 item 4), plus the
+ * chapter bar that stays pinned from the hero to Listen.
  */
 
-export type ChapterId = 'choose' | 'listen' | 'play';
+export type ChapterId = 'try' | 'choose' | 'listen';
 
-export const chapters = {
-  listen: {
-    id: 'listen',
-    label: '02 · Listen',
-    title: 'Hear it before you play it.',
-    line: 'A real grand piano plays the passage, and every note lights up as it sounds.',
-  },
-  // DRAFT: Play copy is pending the owner's sign-off (spec §10 item 4).
-  play: {
-    id: 'play',
-    label: '03 · Play',
-    title: 'Your piano listens.',
-    line: 'The sheet waits until you play the right notes, then moves on.',
-  },
+export const listen = {
+  label: '02 · Listen',
+  title: 'Hear it before you play it.',
+  line: 'A real grand piano plays the passage, and every note lights up as it sounds.',
 } as const;
 
-/** Pinned chapter bar. `href` targets: #choose (Choose.astro), #listen and #play (ListenPlay.astro). */
+/** Pinned chapter bar. `href` targets: #try (TryItHero.astro), #choose (Choose.astro), #listen (Listen.astro). */
 export const chapterBar = {
   ariaLabel: 'Chapters',
   items: [
+    { id: 'try', label: 'Try', href: '#try' },
     { id: 'choose', label: 'Choose', href: '#choose' },
     { id: 'listen', label: 'Listen', href: '#listen' },
-    { id: 'play', label: 'Play', href: '#play' },
   ] as { id: ChapterId; label: string; href: string }[],
 };
 
@@ -67,8 +57,7 @@ export const practice = {
 /**
  * The passage: one quarter note per step in the right hand; the left hand
  * holds a whole note from the first beat of each bar. `dur` is in steps
- * (1 = quarter, 4 = whole). Listen plays one step every --step-ms (900 ms);
- * Play waits until every note that starts on the step has been pressed.
+ * (1 = quarter, 4 = whole). Listen plays one step every --step-ms (900 ms).
  */
 export type Note = { pitch: string; hand: 'rh' | 'lh'; dur: 1 | 2 | 4 };
 export type Step = Note[];
@@ -85,30 +74,8 @@ export const bars: Step[][] = [
 /** On-screen keyboard range: 28 white keys, C2 to B5 (as in Paper). */
 export const keyboard = { lowest: 'C2', whiteKeys: 28 };
 
-/**
- * Computer keys for Play, by KeyboardEvent.code (physical position, so it
- * works on any layout). Home row = white keys from C4, the row above = black
- * keys, the bottom row = white keys from C3. Other keys play nothing.
- *   A S D F G H J K L ; '   →  C4 D4 E4 F4 G4 A4 B4 C5 D5 E5 F5
- *   W E   T Y U   O P       →  C#4 D#4  F#4 G#4 A#4  C#5 D#5
- *   Z X C V B N M           →  C3 D3 E3 F3 G3 A3 B3
- */
-export const computerKeys: Record<string, string> = {
-  KeyA: 'C4', KeyS: 'D4', KeyD: 'E4', KeyF: 'F4', KeyG: 'G4', KeyH: 'A4', KeyJ: 'B4',
-  KeyK: 'C5', KeyL: 'D5', Semicolon: 'E5', Quote: 'F5',
-  KeyW: 'C#4', KeyE: 'D#4', KeyT: 'F#4', KeyY: 'G#4', KeyU: 'A#4', KeyO: 'C#5', KeyP: 'D#5',
-  KeyZ: 'C3', KeyX: 'D3', KeyC: 'E3', KeyV: 'F3', KeyB: 'G3', KeyN: 'A3', KeyM: 'B3',
-};
-
-/** Text equivalents and screen-reader messages. */
+/** Text equivalent for the phone (which is decorative). */
 export const a11y = {
   screenDescription:
-    'The piano.play practice screen: three bars of Ode to Joy on a grand staff, above an on-screen piano keyboard. In Listen, a cursor moves note by note and the matching keys light up, blue for the right hand and orange for the left.',
-  playHint:
-    'Try it: play the highlighted keys with your mouse or finger, or with your computer keyboard (A S D F G H J for C to B, Z X C V B N M an octave lower).',
-  keyboardLabel: 'Piano keyboard',
-  play: (notes: string) => `Play ${notes}`,
-  correct: 'Correct',
-  wrong: 'Not quite',
-  done: 'Well played. Starting again.',
+    'The piano.play practice screen: three bars of Ode to Joy on a grand staff, above an on-screen piano keyboard. A cursor moves through the passage note by note, each note lights up as it sounds, and the matching keys light up, blue for the right hand and orange for the left.',
 };

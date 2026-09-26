@@ -9,7 +9,7 @@
  */
 import type { ImageMetadata } from 'astro';
 import { Image } from 'astro:assets';
-import { bezel } from '../../data/listenPlay';
+import { bezel } from '../../data/listen';
 
 const images = import.meta.glob<{ default: ImageMetadata }>('../../assets/images/iphone-bezel-*.png', {
   eager: true,
