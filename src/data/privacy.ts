@@ -9,7 +9,7 @@ export const privacy = {
   title: 'Privacy',
   updatedLabel: 'Updated',
   /** ISO date; rendered as "25 September 2026". */
-  updated: '2026-09-25',
+  updated: '2026-09-26',
 
   short: {
     label: 'The short version',
@@ -22,7 +22,7 @@ export const privacy = {
     items: [
       {
         term: 'Covers',
-        text: 'The title and composer of a piece you import, so we can paint its cover, with a random ID that caps covers per day. Never the music itself. Covers are kept, so the next person adding the same piece gets it instantly.',
+        text: 'The title and composer of a piece you import, so we can paint its cover, with a random ID that caps covers per day. Never the music itself. Covers are painted by Google’s Gemini image model, which receives only the title and composer. Covers are kept, so the next person adding the same piece gets it instantly.',
       },
       {
         term: 'Purchases',
