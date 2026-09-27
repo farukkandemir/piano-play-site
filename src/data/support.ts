@@ -21,11 +21,11 @@ export const support = {
       items: [
         {
           q: 'How do I connect my piano?',
-          a: 'Turn on Bluetooth on the piano, open the Connect tab and pick it from the list. A USB cable works too: plug it in and piano.play connects on its own. Any digital piano or keyboard with MIDI will do.',
+          a: 'Turn on Bluetooth on the piano, open the Connect tab and pick it from the list. Any digital piano or keyboard with Bluetooth MIDI will do.',
         },
         {
           q: 'My piano isn’t in the list.',
-          a: 'Make sure the piano’s Bluetooth MIDI is on (some pianos need a button held or a setting turned on) and that it isn’t connected to another app. Pianos without Bluetooth MIDI connect with a USB cable and Apple’s camera adapter.',
+          a: 'Make sure the piano’s Bluetooth MIDI is on (some pianos need a button held or a setting turned on) and that it isn’t connected to another app.',
         },
         {
           q: 'Can I practise without a piano?',
