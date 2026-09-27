@@ -16,7 +16,7 @@ const { title = defaultTitle, description = site.description, noindex = false } 
 
 const path = Astro.url.pathname.replace(/\.html$/, '').replace(/\/index$/, '/');
 const canonical = new URL(path, site.url).href;
-// Placeholder: public/og.png is the app icon and wordmark on the page colour.
+// public/og.png: the logo mark, wordmark and tagline on the page colour.
 // Replace with a real still of the hero (1200×630) when the hero is final.
 const ogImage = new URL('/og.png', site.url).href;
 const smartBanner = site.launched && site.appStoreId !== '';
@@ -32,6 +32,7 @@ const smartBanner = site.launched && site.appStoreId !== '';
 <meta name="color-scheme" content="light" />
 <link rel="preload" href="/fonts/outfit-latin-wght.woff2" as="font" type="font/woff2" crossorigin />
 
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
 <link rel="icon" href="/favicon.png" sizes="48x48" type="image/png" />
 <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
@@ -44,7 +45,7 @@ const smartBanner = site.launched && site.appStoreId !== '';
 <meta property="og:image" content={ogImage} />
 <meta property="og:image:width" content="1200" />
 <meta property="og:image:height" content="630" />
-<meta property="og:image:alt" content="piano.play: That piece you always wanted to play." />
+<meta property="og:image:alt" content="The piano.play logo with the line: That piece you always wanted to play." />
 <meta property="og:locale" content="en_GB" />
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:title" content={title} />

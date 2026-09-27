@@ -6,7 +6,10 @@ const isHome = ['/', '/index', '/index.html'].includes(Astro.url.pathname);
 ---
 
 <header class="nav">
-  <a class="wordmark" href="/" aria-current={isHome ? 'page' : undefined}>{site.name}</a>
+  <a class="wordmark" href="/" aria-current={isHome ? 'page' : undefined}>
+    <img class="mark" src="/brand/piano-play-mark-light.svg" alt="" width="24" height="24" />
+    {site.name}
+  </a>
   <AppStoreButton variant="text" />
 </header>
 
@@ -21,6 +24,9 @@ const isHome = ['/', '/index', '/index.html'].includes(Astro.url.pathname);
     margin-inline: auto;
   }
   .wordmark {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
     font-size: 18px;
     line-height: 22px;
     font-weight: var(--weight-semibold);
@@ -28,6 +34,11 @@ const isHome = ['/', '/index', '/index.html'].includes(Astro.url.pathname);
     color: var(--color-ink);
     text-decoration: none;
     transition: opacity var(--duration-fast) ease;
+  }
+  .mark {
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
   }
   .wordmark:hover {
     opacity: 0.7;
