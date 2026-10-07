@@ -18,7 +18,7 @@ The site opens with the first notes of *Für Elise* and a small keyboard. Tap th
 - **Hear it first.** A real grand piano plays the passage, and every note lights up as it sounds.
 - **Play at your pace.** Connect a digital piano over Bluetooth and the sheet waits until you play the right notes.
 
-Coming soon to the App Store.
+[Download piano.play on the App Store](https://apps.apple.com/app/piano-play/id6816199073).
 
 ### Made with care
 

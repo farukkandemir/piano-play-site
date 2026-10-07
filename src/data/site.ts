@@ -10,9 +10,9 @@ export const site = {
   description:
     'piano.play is an iPhone app for practising the piano. Connect your piano, open any piece, and practise at your own pace.',
   supportEmail: 'support@getpianoplay.com',
-  launched: false,
-  appStoreUrl: '',
-  appStoreId: '',
+  launched: true,
+  appStoreUrl: 'https://apps.apple.com/app/piano-play/id6816199073',
+  appStoreId: '6816199073',
   comingSoon: 'Coming soon to the App Store',
   footerLine: 'piano.play · made for iPhone',
   credits: {
